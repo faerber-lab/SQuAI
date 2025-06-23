@@ -1,7 +1,7 @@
 # SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation
 
 SQuAI is a scalable and trustworthy **multi-agent Retrieval-Augmented Generation (RAG)** system for scientific question answering (QA). It is designed to address the challenges of answering complex, open-domain scientific queries with high relevance, verifiability, and transparency. This project is introduced in our CIKM 2025 demo paper:  
-**"SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation"**  
+
 Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.be)
 ---
 
