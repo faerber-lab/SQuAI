@@ -1,0 +1,99 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyCharm/IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+.idea_modules/
+
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env/
+.venv/
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+
+# Data files
+data/documents/*
+data/benchmarks/*
+!data/documents/.gitkeep
+!data/benchmarks/.gitkeep
+
+# Model files
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.h5
+*.model
+*.pkl
+*.out
+*.sh
+
+# FAISS indexes
+*.faiss
+*.index
+
+# Logs
+logs/
+*.log
+runs/
+
+# Results
+results/*
+!results/.gitkeep
+
+# Large files (adjust as needed)
+*.zip
+*.tar.gz
+*.7z
+*.pdf
+
+# Temporary files
+.DS_Store
+*.swp
+*.swo
+*~
+.nfs*
+*.txt
+split_questions/
+C_split_questions/questions_split_*.jsonl
