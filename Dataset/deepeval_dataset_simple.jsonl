@@ -1,0 +1,506 @@
+{"id": 1, "question": "What are the main findings of the research on non-extremal Kerr black holes and their role in enabling ultraenergetic collisions?"}
+{"id": 2, "question": "What is the relationship between Lorentz force and Casimir force in a medium, and how do the research findings explain their interaction?"}
+{"id": 3, "question": "How does ChPT apply to the research conducted at RHIC, and what are the main findings of this application?"}
+{"id": 4, "question": "What is the primary energy source used to fuel the muon and antimuon beams in the MUonE experiment?"}
+{"id": 5, "question": "What are the main findings in the research paper regarding the impact of grading length on triangle inequality, and how do the methods used affect the key results?"}
+{"id": 6, "question": "What methods does pdeeig use to solve eigenvalue equations and what are its key findings?"}
+{"id": 7, "question": "What are the main limitations of data and models in multilingual Grapheme-to-Phoneme systems and how do they impact the accuracy of these systems?"}
+{"id": 8, "question": "What are the main findings of the QCD(BF) phase structure research, and what methods were used to obtain these results?"}
+{"id": 9, "question": "How does GPR estimate functions from noisy data?"}
+{"id": 10, "question": "What methods does the research paper use to ensure uniform electron recoils from the Cs source, and what are the main findings related to this process?"}
+{"id": 11, "question": "What are the key improvements that WFB-loss brings to face representation, and how does it enhance the accuracy of face recognition models?"}
+{"id": 12, "question": "What are the polynomial bounds on the mixing time of Thorp shuffles and how do they relate to the overall efficiency of the shuffling process?"}
+{"id": 13, "question": "default"}
+{"id": 14, "question": "What are the main factors examined in the projections and how do they impact the research findings?"}
+{"id": 15, "question": "What are the main findings of the research on Frobenius action and how do the methods used impact the key results?"}
+{"id": 16, "question": "How do two qubits map to a qutrit in the context of quantum computing research, and what are the key findings related to this mapping?"}
+{"id": 17, "question": "What changes occur in the magnetic structure of Fe4Si2Sn7O16 at a temperature of 1.6 K?"}
+{"id": 18, "question": "What are the main differences between ANK and alternative formulations in the context of axially symmetric spacetimes, and how do these differences impact the research findings?"}
+{"id": 19, "question": "What are the main findings of the research paper on coding theory, specifically regarding the application of the Gilbert-Varshamov bound to FH sequences, and how do the methods used impact the key results?"}
+{"id": 20, "question": "How do image vortices and anti-vortices satisfy boundary conditions in the context of this research paper?"}
+{"id": 21, "question": "What are the main findings related to periodicity in the given formula 380b37e3 and how do the conditions affect these findings?"}
+{"id": 22, "question": "What methods does the research paper propose to mitigate precision explosion in MP, and what are the key findings regarding its effectiveness?"}
+{"id": 23, "question": "How is the 2500Å luminosity calculated from the 2MASS magnitudes in this research paper?"}
+{"id": 24, "question": "How does SA reduce model outcome uncertainty, and what methods are used to achieve this reduction in the research paper?"}
+{"id": 25, "question": "What are the main findings in the research paper regarding the relationship between manifold construction and wave properties, and how do the methods used impact the key results?"}
+{"id": 26, "question": "What are the main findings regarding the impact of metallic screening on QP corrections in this research paper?"}
+{"id": 27, "question": "What is the relationship between the topcolor boson mass and the symmetry breaking scale in this research paper?"}
+{"id": 28, "question": "What methods does the research paper use to ensure semantic consistency in ART, and what are the main findings regarding its effectiveness?"}
+{"id": 29, "question": "What are the main findings regarding marginal couplings and their impact on finiteness in the research paper?"}
+{"id": 30, "question": "What are the main findings on how strain configurations affect the properties of graphene, and what methods were used to obtain these results?"}
+{"id": 31, "question": "What are the main findings on how NLOS, multi-path, and bias affect the accuracy of UWB TDOA, and what methods were used to mitigate these effects in the research?"}
+{"id": 32, "question": "What are the main findings of the research paper on LQ cost functionals and how do the methods used impact the key results?"}
+{"id": 33, "question": "What are the main findings regarding the relationship between grain sizes in nebulae and their corresponding albedo values in this research paper?"}
+{"id": 34, "question": "What role does neutron density play in the production of Sr, Ba, and Pb, and how do the research findings support this relationship?"}
+{"id": 35, "question": "How does the plan structure in this research paper support robot introspection and what are the key findings related to this aspect?"}
+{"id": 36, "question": "How does Equation REF's Receiver Operating Characteristic restrict convergence around the point (1,0) for real values of the given formulas, and what are the implications of this restriction on the overall results?"}
+{"id": 37, "question": "What are the main findings regarding the impact of gapped spin excitation spectrum on thermal conductivity in this research paper?"}
+{"id": 38, "question": "How do symmetries classify fermionic CFTs and what are the main findings of this research in relation to conformal field theory?"}
+{"id": 39, "question": "How does avoiding temporal dependency simplify equation solving in the context of this research paper?"}
+{"id": 40, "question": "How do nonlinear components contribute to the increase in complexity, and what methods were used to analyze this phenomenon in the research paper?"}
+{"id": 41, "question": "default"}
+{"id": 42, "question": "What role does the sodium dimer beam play in enabling STIRAP, and how does it contribute to the research findings?"}
+{"id": 43, "question": "What are the main findings in the research paper about the application of gyrokinetic equations in plasma studies, and how do the methods used relate to the key results?"}
+{"id": 44, "question": "What are the main findings of ChPT in predicting 2π⁰ photoproduction, and how do the methods used contribute to the key results?"}
+{"id": 45, "question": "What are the main findings regarding the impact of defects on monoclinic ZrO2 grain boundary properties, and what methods were used to obtain these results?"}
+{"id": 46, "question": "What does the V_N(r,θ) form represent in the context of this research paper and how is it used to achieve the main findings?"}
+{"id": 47, "question": "What methods are used to produce GO and what are the main findings of this research?"}
+{"id": 48, "question": "What role does incomplete wetting play in the formation of 3D islands, and how do the researchers' methods and findings support this phenomenon?"}
+{"id": 49, "question": "What role do Frank constants play in determining the equilibrium properties of bent core liquid crystals, and how do they impact the overall structure of these materials?"}
+{"id": 50, "question": "How does the parameter count of T-CFT without DS compare to other models in the research paper?"}
+{"id": 51, "question": "What are the main differences in distribution and membership between GCs and OCs, and how do these differences impact the research findings?"}
+{"id": 52, "question": "How does the gate voltage affect the resistance of a single-layer graphene field-effect transistor, and what are the key findings related to this modulation?"}
+{"id": 53, "question": "How does equation (1) relate to the Kardar-Parisi-Zhang equation, and what are the key findings of this mapping in the research paper?"}
+{"id": 54, "question": "What role does the power-law play in modeling the behavior of shear-thinning fluids, and how does it impact the accuracy of the model's predictions?"}
+{"id": 55, "question": "What are the main findings of ADAM optimization in model training, particularly when using a learning rate of 2e-5, and how does it compare to other optimization methods?"}
+{"id": 56, "question": "What is the effect of the formula on relic density and how does it relate to the main findings of the research paper?"}
+{"id": 57, "question": "What are the main methods used to simplify wave functions in quantum mechanics and what are the key results of this process?"}
+{"id": 58, "question": "What are the main differences in how the Bose-Fermi Kondo model interacts with bosonic versus fermionic baths, and how do these interactions impact the model's key results?"}
+{"id": 59, "question": "How does S-FGRM enhance adversarial transferability in the context of this research paper, and what are the key findings related to its methods and results?"}
+{"id": 60, "question": "What are the main findings related to the density of Fredholm maps in this research paper, and how do the methods used contribute to these results?"}
+{"id": 61, "question": "How do Constant objects enable modification of UFL forms without recompilation, and what are the main findings related to this approach in the research paper?"}
+{"id": 62, "question": "What are the main findings in the research paper about the relationship between principal ideals and quadratic fields, and how do the methods used impact the key results?"}
+{"id": 63, "question": "What role do quantum fluctuations play in inducing electron tunneling between classical states, and how do the researchers measure this phenomenon in their study?"}
+{"id": 64, "question": "What are the main findings in the research paper regarding simplicial suspension and canonical equivalence, and how do the methods used relate to the key results?"}
+{"id": 65, "question": "What are the main findings on how human auditory information loss affects word recognition, and what methods were used to study this relationship?"}
+{"id": 66, "question": "What are the main findings on how vortex flow affects the propagation of transverse waves in the research paper?"}
+{"id": 67, "question": "What are the three key benefits of using a mapless motion planner and how do they improve navigation?"}
+{"id": 68, "question": "What are the main findings in the research paper about polytropic spheres and Palatini f(R) gravity, and how do the methods used lead to the key results that cast doubt on this theory?"}
+{"id": 69, "question": "How does Meta-RTL's adaptive weights enhance low-resource commonsense reasoning, and what are the key findings of this approach in the research paper?"}
+{"id": 70, "question": "How does RMT apply to Vellekoop and Mosk's transmission optimization and what are the key findings of this application?"}
+{"id": 71, "question": "What are the main findings of the research on neutron removal and its effect on revealing Mg's structure, and how do the methods used contribute to these findings?"}
+{"id": 72, "question": "What role does the parameter play in the complex structure of elliptic curves and how does it impact the main findings of this research paper?"}
+{"id": 73, "question": "What are the shared neighbors of 2465dc29 and a4ba46c1 and how do they relate to the main findings of this research?"}
+{"id": 74, "question": "What are the main findings of the research on Eventual Increase and how do the methods used contribute to the key results?"}
+{"id": 75, "question": "How do LTT observations support the 1-planet hypothesis and what are the main findings of this research?"}
+{"id": 76, "question": "How does the 165-day orbit of IGR J11215-5952 affect its emission patterns and what are the implications of this orbital period on our understanding of the object's behavior?"}
+{"id": 77, "question": "What is the relationship between the scGW conduction bands and the BIS spectrum in this research paper?"}
+{"id": 78, "question": "What is the role of topological pressure in the research paper and how does it relate to the main findings?"}
+{"id": 79, "question": "What are the main findings of Liouville's theorem in relation to universal quarternary diagonal forms, and how does it classify them?"}
+{"id": 80, "question": "What role does the Einstein coefficient play in determining the line integral intensity, and how does it impact the overall results of the research?"}
+{"id": 81, "question": "What are the main factors that contribute to ambiguities and uncertainties in land cover classification, and how do these factors impact the overall accuracy of the classification results?"}
+{"id": 82, "question": "What are the main findings of HAR in healthcare and how are its methods applied to achieve key results?"}
+{"id": 83, "question": "What are the main differences in the Fermi surface maps of BaK0.76 and BaK0.88, and how do these differences relate to their electronic properties?"}
+{"id": 84, "question": "How do FPGA-accelerated BNNs impact power consumption and inference time, and what are the main findings of this research in terms of performance improvements?"}
+{"id": 85, "question": "What are the main differences between classical machine learning and modern machine learning approaches when applied to tabular data, and how do these differences impact the learning process?"}
+{"id": 86, "question": "What are the main requirements for using a Language Model as a Knowledge Base, and how do these requirements impact the model's performance and accuracy?"}
+{"id": 87, "question": "What is the relationship between beam intensity and the degree of damage, and how do the research findings support this correlation?"}
+{"id": 88, "question": "What are the main findings of the Emoji Attack research and how does it exploit Judge LLMs' token segmentation bias?"}
+{"id": 89, "question": "What is the main role of the IDA solver in the research paper and how does it contribute to the overall findings?"}
+{"id": 90, "question": "What role does thermal noise play in the formation of vesicles, and how do the researchers measure its impact in their study?"}
+{"id": 91, "question": "What are the main findings of Cartan involution in Lie algebra decomposition, and how does it affect the overall structure of the algebra?"}
+{"id": 92, "question": "What are the main findings regarding the relationship between metric duality and Taub-NUT symmetry in this research paper?"}
+{"id": 93, "question": "What are the main findings in the research paper regarding the impact of geon quotients on Einstein's theory, and how do the methods used support these findings?"}
+{"id": 94, "question": "What are the main findings in Einstein's equations that suggest local flatness, and how do the methods used in the research lead to these key results?"}
+{"id": 95, "question": "What methods does CBOWRA use to detect medication anomalies and what are its key findings in this area?"}
+{"id": 96, "question": "What role do fixed-point subalgebras play in relation to observables in the context of this research paper?"}
+{"id": 97, "question": "What methods do simulations use to model gravitational wave strain for nonspinning binaries, and what are the key findings of these simulations?"}
+{"id": 98, "question": "What role do different particle types play in the formation and stability of hexatic order, and how do the research findings relate to the methods used to study this phenomenon?"}
+{"id": 99, "question": "What is the relationship between BCs and KK masses, and how do the researchers' findings contribute to our understanding of this interaction?"}
+{"id": 100, "question": "What role does MambaMorph's module play in facilitating deformable registration, and how does it contribute to the research paper's main findings?"}
+{"id": 101, "question": "What are the main findings regarding the impact of OS, CPU, and Python versions on AI system variability, and how do these factors affect the methods used and key results in this research?"}
+{"id": 102, "question": "What are the main findings of QCD's role in dense matter via effective models and how do the methods used impact the key results?"}
+{"id": 103, "question": "What are the main findings regarding position bias and its impact on click rates in this research paper?"}
+{"id": 104, "question": "What role does Dynamic Time Warping play in identifying similar Bioactive Lipids, and how effective is it in detecting patterns?"}
+{"id": 105, "question": "What are the key equation relationships presented in Lemma 5 and how do they relate to the main findings of the research paper?"}
+{"id": 106, "question": "What are the main findings regarding the dependence of electron mediated spin-spin interaction on spin-polarization, and how do the methods used in this research affect the key results?"}
+{"id": 107, "question": "What are the main findings on how frustration and ferromagnetic correlation affect quantum magnetism phases in this research paper?"}
+{"id": 108, "question": "What is the role of the dilatation operator in the context of Brauer basis, and how does it affect the main findings of this research paper?"}
+{"id": 109, "question": "What is the relationship between the Balmer decrement and dust attenuation in the context of this research paper, and how do the authors use this relationship to draw conclusions about their findings?"}
+{"id": 110, "question": "What is the role of polynomial splines in the convolution formula and how do they contribute to the overall method?"}
+{"id": 111, "question": "What methods does SUPERBLINK use to identify high proper motion stars and what are its key findings in this area of research?"}
+{"id": 112, "question": "What are the main findings regarding the impact of parity conditions on symplectic form finiteness in this research paper?"}
+{"id": 113, "question": "How do Garsia's techniques apply to martingale decomposition and what are the key findings of this application?"}
+{"id": 114, "question": "What are the main differences between DreamMatcher's structure preservation and key-value replacement methods, and how do these differences impact the research findings?"}
+{"id": 115, "question": "How do VESPA SFHs aid SN type analysis, and what are the main findings of this research in terms of supernova classification?"}
+{"id": 116, "question": "What is the relationship between mutual information and relative entropy in the context of this research paper, and how do the authors use these concepts to support their main findings?"}
+{"id": 117, "question": "How does LO intensity manipulation enhance CVQKD security, and what are the main findings of this research in terms of improving security?"}
+{"id": 118, "question": "What are the main findings of Context Diffusion regarding in-context learning, and how do the methods used enable this process?"}
+{"id": 119, "question": "What are the main findings of the research on axiom schema in intuitionistic logic and how do the methods used impact the key results?"}
+{"id": 120, "question": "What methods does the research paper use to demonstrate how optical isolators prevent Raman pump power, and what are the main findings regarding their effectiveness?"}
+{"id": 121, "question": "What are the main findings regarding the effect of scalar fields on the motion of point-like sources in this research paper?"}
+{"id": 122, "question": "How do the polarizations of TT gauges relate to time-dependent tensors in the context of this research paper?"}
+{"id": 123, "question": "What is the relationship between r, D_L, and D_T in dispersion, and how do these variables impact the main findings of the research paper?"}
+{"id": 124, "question": "How does differentiability optimize volume rendering parameters, and what are the main findings of this research in terms of improving rendering quality?"}
+{"id": 125, "question": "What are the main findings regarding the evolution of hyperon gaps into quark gaps, and what methods were used to study this phenomenon?"}
+{"id": 126, "question": "What are the main findings on how scalable nodes enhance quantum network capabilities, and what methods were used to achieve these results?"}
+{"id": 127, "question": "What are the main findings in the research paper about Hecke C*-algebras and their connection to number fields' rigidity, and how do the methods used contribute to these results?"}
+{"id": 128, "question": "What methods are used to improve estimates and what are the key findings related to estimation improvement in this research paper?"}
+{"id": 129, "question": "What are the main findings of the research on N-pure implication and how do the methods used contribute to the key results?"}
+{"id": 130, "question": "What are the main findings on the relationship between symmetric codes and alternant or Goppa codes, and how do their automorphisms compare?"}
+{"id": 131, "question": "What are the main findings on how on-site Coulomb energy affects the properties of graphene, and what methods were used to study this impact?"}
+{"id": 132, "question": "What methods did the photometry codes and SFH reconstruction codes use to recover the star formation history of Cetus, and what were the main findings of this process?"}
+{"id": 133, "question": "What role do initial conditions play in ensuring the well-definedness of the research findings, and how do the methods used in this paper account for these conditions?"}
+{"id": 134, "question": "What are the main findings of the research on vortex velocity correlations in phase-ordering kinetics and how were they obtained?"}
+{"id": 135, "question": "What are the main methods used to identify k centers in the given research paper, and how do these methods impact the key results?"}
+{"id": 136, "question": "What are the main findings regarding the effect of D0 charge on D4 brane behavior in this research paper?"}
+{"id": 137, "question": "What are the main findings on how the Lorentz force affects Bohmian trajectories in this research paper, and what methods were used to obtain these results?"}
+{"id": 138, "question": "What role does crossing symmetry play in the nonrenormalization of certain physical processes, and how is this relationship explored in the research paper?"}
+{"id": 139, "question": "What are the main differences between weak and strong continuity in the context of this research paper, and how do these concepts impact the findings and methods used?"}
+{"id": 140, "question": "What methods did the researchers use to analyze river flows with the horizontal visibility graph, and what were the main findings of this study?"}
+{"id": 141, "question": "What are the main findings regarding the impact of UV radiation and stellar winds on star formation, and what methods were used to obtain these results?"}
+{"id": 142, "question": "What is the relationship between II Z_E^10 surfaces and discriminant 14 cubic fourfolds, and how do the main findings of this research paper explain their connection?"}
+{"id": 143, "question": "What role do Wigner functions play in understanding the quantum-classical transition, and how do the research findings contribute to this field?"}
+{"id": 144, "question": "What role does the Polyakov loop play in the Nambu-Jona-Lasinio model's predictions, and how does it impact the overall results?"}
+{"id": 145, "question": "What is the device's role in measuring gaze and accommodation, and how does it contribute to the research findings?"}
+{"id": 146, "question": "What are the main conditions for effective distribution representation and how do they impact the research findings?"}
+{"id": 147, "question": "What is the role of Chernoff-Hoeffding inequality in understanding expert set generalization errors, and how does it impact the main findings of this research paper?"}
+{"id": 148, "question": "What are the main findings in the research paper about graphene's time-reversal symmetry and its potential applications in AI?"}
+{"id": 149, "question": "How does the transformation e^Z affect the inclusion of c_0T^{EPS}_0 in Q, and what are the main findings related to this process in the research paper?"}
+{"id": 150, "question": "What are the main improvements of NNPDF3.0 in PDF analyses and how do they impact the research findings?"}
+{"id": 151, "question": "What methods does the SSformer model use to reduce complexity, and how do these methods contribute to its main findings and key results?"}
+{"id": 152, "question": "How does the CATFISH simulation model replicate black hole events, and what are the key findings from this research?"}
+{"id": 153, "question": "What are the main findings regarding ASP corrections and their impact on program consistency in this research paper?"}
+{"id": 154, "question": "What are the main findings regarding the relationship between temperature and condensate volume in this research paper?"}
+{"id": 155, "question": "What are the main findings regarding the impact of torque reversals on spin trends in this research paper?"}
+{"id": 156, "question": "What are the main findings regarding the impact of anisotropic stress on universe evolution, and how do the research methods used support these conclusions?"}
+{"id": 157, "question": "What are the main findings of the research on truncated Euler equations in predicting large scale flow, and how do the methods used impact the key results?"}
+{"id": 158, "question": "What is the relationship between edge resistances and vertex degrees in the context of this research paper, and how do the authors' methods and findings shed light on this topic?"}
+{"id": 159, "question": "What are the main findings on how functionalities map inputs to outputs in two-party problems and what methods were used to achieve these results?"}
+{"id": 160, "question": "How does the framework address author name ambiguity in its research methodology and what are the key findings related to this issue?"}
+{"id": 161, "question": "What are the main steps in the proof of Theorem REF and how do they contribute to the overall conclusion of the research paper?"}
+{"id": 162, "question": "How does the proposed technique in this research paper balance error detection with energy efficiency, and what are the key findings related to this trade-off?"}
+{"id": 163, "question": "What are the main challenges of Federated Learning and Data Generation, and how do they affect the evaluation of Federated Data Generation methods?"}
+{"id": 164, "question": "What are the main findings of the research on how noise force simplifies dissipative quantum systems dynamics, and what methods were used to achieve these results?"}
+{"id": 165, "question": "How does the lifetime return objective enhance exploration across episodes in this research, and what are the key findings related to its implementation?"}
+{"id": 166, "question": "How do CNNs, BiLSTM layers, and highway connections contribute to the accuracy of supertagging in the research paper, and what are the main findings regarding their effectiveness?"}
+{"id": 167, "question": "How does the encoding module in this research paper generate multi-query results, and what methods are used to achieve this?"}
+{"id": 168, "question": "What role does cFM ordering play in driving orbital ordering in BNOO, and how do the researchers support this claim in the paper?"}
+{"id": 169, "question": "What are the main findings of modified gravity theories on conformal mode analysis, and how do the methods used in this research impact the key results?"}
+{"id": 170, "question": "What role do twisting system pairs play in the construction of bialgebras' Hopf envelopes, and how do the main findings of this research relate to their methods and key results?"}
+{"id": 171, "question": "What role does anisotropy play in altering diffusion constants, and how do the researchers measure its impact in this study?"}
+{"id": 172, "question": "What is the relationship between the mean field gap and the insulator-metal transition, and how do the research findings support this connection?"}
+{"id": 173, "question": "How do the polarisation properties of Fast Radio Bursts reveal information about the magnetic fields in the Intergalactic Medium, and what are the key findings from this research?"}
+{"id": 174, "question": "What is the significance of substitution closure in CCS processes and how does it impact the overall outcome of these processes?"}
+{"id": 175, "question": "What are the main findings on how nonstoichiometry affects the magnetic properties of jarosite, and what methods were used to obtain these results?"}
+{"id": 176, "question": "What are the main differences between MSE and KL losses in the context of distillation, and how do they affect the overall performance of the model?"}
+{"id": 177, "question": "What are the main findings regarding the impact of hyperelasticity on graphene's behavior in this research paper?"}
+{"id": 178, "question": "What are the main findings regarding the interactions between flagellum, head, and forces in this research paper?"}
+{"id": 179, "question": "How do integrators, thermostatting, and ab initio calculations contribute to reducing the costs associated with path integral calculations in this research?"}
+{"id": 180, "question": "How do undoped crystals' higher light yields and eliminated Cherenkov radiation contribute to improved detector sensitivity in this research?"}
+{"id": 181, "question": "How does the two-peak hypothesis improve the description of the $B^+K^-$ mass spectrum?"}
+{"id": 182, "question": "What are the main findings in the research on M-branes and their role in producing 5D black holes, and what methods were used to obtain these results?"}
+{"id": 183, "question": "What is the relationship between Tree IRPFL's approximation ratio and the Steiner tree problem, and how do the main findings of this research paper compare to existing methods?"}
+{"id": 184, "question": "What techniques can be used to reduce neural network parameters without affecting their performance, and what are the main findings of this research in terms of model compression?"}
+{"id": 185, "question": "What happens to current density as the temperature approaches the critical temperature Tc in the research paper?"}
+{"id": 186, "question": "What methods do equi-areal mirrors use to minimize distortion, and what are the key findings related to their effectiveness?"}
+{"id": 187, "question": "What is the relationship between the electric Hamiltonian and SU(3) gauge fixing, and how does it impact the research findings?"}
+{"id": 188, "question": "What methods does the third interferometer use to detect photon passage and what are the key findings related to this detection?"}
+{"id": 189, "question": "What are the main findings in the research paper regarding the relationship between polarization profiles and pulsar types, and how do the methods used impact the key results?"}
+{"id": 190, "question": "What are the main differences between type 1 and type 2 idempotents, and how do they relate to the research findings in this paper?"}
+{"id": 191, "question": "How does the geographical organization of data impact the analysis and what methods are used to achieve this organization in the research paper?"}
+{"id": 192, "question": "What is the relationship between log-canonical threshold and Hodge spectral exponents in the context of this research paper?"}
+{"id": 193, "question": "What is the relationship between turning points and branch points in the context of this research paper?"}
+{"id": 194, "question": "What methods are used in this research paper to enable fault-tolerance using CSS codes, and what are the main findings regarding their effectiveness?"}
+{"id": 195, "question": "What is the relationship between saddle points and precursor frequencies in the context of this research paper?"}
+{"id": 196, "question": "What is the relationship between the RV data baseline and the observation span of HD 45364, and how does it impact the research findings?"}
+{"id": 197, "question": "What are the main effects of coarse graining on lattice QCD and how do they impact the research findings?"}
+{"id": 198, "question": "How do spectral-cube surveys utilize immersive 3D visualization to enhance astronomy discovery, and what are the main findings of this research?"}
+{"id": 199, "question": "What are the main findings and methods used to derive angular velocity for near-circular orbits in this research paper?"}
+{"id": 200, "question": "What are the main findings regarding how parameter changes affect particle interactions in this research paper?"}
+{"id": 201, "question": "What is the relationship between surjectivity and the kernel of a restriction morphism in the context of this research paper?"}
+{"id": 202, "question": "What methods are used to create the Dirac monopole's magnetic field in the research paper?"}
+{"id": 203, "question": "What are the main differences in disease severity predictions between the MT-HH and IDS-HH models, and how do these differences impact the research findings?"}
+{"id": 204, "question": "What do Arrott plots indicate about magnetic transitions in the research paper, and how do the methods used to create these plots contribute to the main findings?"}
+{"id": 205, "question": "What are the main findings in the research paper regarding gauge transformations and their impact on space-time fields?"}
+{"id": 206, "question": "What are the statistical effects of single beam on channel power gain in this research, and how do the findings relate to the methods used?"}
+{"id": 207, "question": "What is the relationship between Hahn echo and critical points in the context of this research paper?"}
+{"id": 208, "question": "How does metric learning aid supervised learning in aligning representations with human intuition, and what are the key findings and methods used in this research?"}
+{"id": 209, "question": "What are the main findings regarding the effect of aggregation on XAS spectra in this research paper?"}
+{"id": 210, "question": "What are the main findings regarding the interaction between black holes and dark matter halos in this research paper?"}
+{"id": 211, "question": "What are the main findings on how light-matter interaction influences energy current in this research paper?"}
+{"id": 212, "question": "What are the main findings in Schönhage's inequality and how does it impact the calculation of tensor volumes?"}
+{"id": 213, "question": "What methods does QLMD use to determine the solar interior equation of state, and what are the key findings of this research?"}
+{"id": 214, "question": "What are the main findings regarding the impact of single receiver limitation on backscatter in this research paper?"}
+{"id": 215, "question": "What are the main findings regarding the effect of electron puddles on helical edge conductance in this research paper?"}
+{"id": 216, "question": "What are the main findings on how different reconstruction types affect computational geometry performance in this research paper?"}
+{"id": 217, "question": "What are the main findings regarding the sinusoidal magnetic structure in late-series manganites and how were they discovered?"}
+{"id": 218, "question": "What are the main findings in the research paper regarding how calibration surpasses accuracy in sports betting model selection, and what methods were used to achieve these results?"}
+{"id": 219, "question": "How does the rebuttal effectively address the reviewers' comments and what are the main points it covers to improve the research paper?"}
+{"id": 220, "question": "What methods does the wrapper use to reduce CO2 emissions, and what are the key findings of this research?"}
+{"id": 221, "question": "What are the main criteria that must be met according to the research paper's findings and methods?"}
+{"id": 222, "question": "What are the main findings regarding the relationship between EYM/EYMH black holes' magnetic fields and their mass, charge, and angular momentum in this research paper?"}
+{"id": 223, "question": "What methods were used to maximize the worst-user's mutual information in this research, and what were the key findings?"}
+{"id": 224, "question": "What are the main findings regarding wall-crossing morphisms and their relationship to alpha-stable pairs on P^2 in this research paper?"}
+{"id": 225, "question": "What role does vs_n play in the process of vertical key generation, and how does it impact the overall outcome?"}
+{"id": 226, "question": "What are the main applications of Markov's inequality in research and how is it used to analyze data?"}
+{"id": 227, "question": "How does the size of impurities affect the bond length in the materials studied in this research paper?"}
+{"id": 228, "question": "What methods do lattice simulations use to determine the GW spectrum, and what are the key findings of this research?"}
+{"id": 229, "question": "What are the main findings regarding the impact of superclusters' high galaxy densities on cluster mergers, and what methods were used to obtain these results?"}
+{"id": 230, "question": "How do game forms map strategies to outcomes in the context of this research paper, and what are the key findings related to this concept?"}
+{"id": 231, "question": "How do LSSMs address observational noise in X-ray data to improve the accuracy of their findings?"}
+{"id": 232, "question": "What are the main effects of altering the cosmological constant on the power spectrum in this research paper?"}
+{"id": 233, "question": "What are the main findings on how linear strategies enable effective signaling, and what methods were used to obtain these results?"}
+{"id": 234, "question": "What are the main findings and methods used to determine the unique solution of a dual problem in this research paper?"}
+{"id": 235, "question": "What role do non-symmorphic symmetries play in protecting nodal line Fermi surfaces, and how do the researchers demonstrate this protection in their study?"}
+{"id": 236, "question": "What are the main findings of the research on spectral slope variations on 67P/CG and how were they obtained?"}
+{"id": 237, "question": "What are the main findings on how the AR regime affects shot noise in N-TI-S contacts, and what methods were used to obtain these results?"}
+{"id": 238, "question": "What role does the local field play in enhancing emission current, and how does it impact the overall findings of this research paper?"}
+{"id": 239, "question": "How do vision-based techniques aid seizure detection, and what are the main findings of this research in terms of accuracy and reliability?"}
+{"id": 240, "question": "What is the relationship between stellar spots and spike, and how do researchers study this phenomenon in the context of the research paper?"}
+{"id": 241, "question": "What are the main findings of the research on how morphology and orthography complexities affect Arabic sentiment analysis, and what methods were used to achieve these results?"}
+{"id": 242, "question": "How do the variables T_t and T_r relate to each other through the parameter lambda in the context of this research paper?"}
+{"id": 243, "question": "How does the research paper use asteroseismology to rule out companions, and what methods are employed to achieve this?"}
+{"id": 244, "question": "How does background understanding impact parameter inference in the context of this research paper, and what are the key findings related to this topic?"}
+{"id": 245, "question": "What role did the Academy play in driving the goals of meridian measurement, and how did their objectives influence the research methods and outcomes?"}
+{"id": 246, "question": "What are the main differences in common causes between classical and random field models, and how do these differences impact the research findings?"}
+{"id": 247, "question": "What effects does low temperature have on the string sector during the heating process, and how do these effects impact the overall results?"}
+{"id": 248, "question": "How does the HGRL method handle complex patterns in graph structures, and what are its key findings in addressing these challenges?"}
+{"id": 249, "question": "What role does the Legendre transformation play in removing action divergence, and how does it impact the overall results of the research?"}
+{"id": 250, "question": "What are the main findings in the research paper regarding the relationship between macroscale electricity and microscopic charge density, and how do the methods used impact the key results?"}
+{"id": 251, "question": "What role does functor exactness play in the vanishing cycle decomposition, and how do the main findings of this research relate to its methods and key results?"}
+{"id": 252, "question": "What are the main findings of the research on evolving EoS models and their impact on cosmography?"}
+{"id": 253, "question": "What are the main findings and methods used in the research paper related to formula ef5696bb, and what are the key results that can be applied in practice?"}
+{"id": 254, "question": "What are the main findings of the research on auto-equivalence functors and how do they relate to the action of G on C?"}
+{"id": 255, "question": "What are the main differences in model parameters and how do they impact the research findings?"}
+{"id": 256, "question": "What methods does ECDL use to stabilize spectroscopy light and what are the key findings related to its effectiveness in this application?"}
+{"id": 257, "question": "What are the main findings regarding proton localization in neutron star matter, and what methods were used to achieve these results?"}
+{"id": 258, "question": "What are the main findings regarding the impact of quantum and thermal fluctuations on two-level systems in this research paper?"}
+{"id": 259, "question": "What are the main findings in the research on right-handed neutrinos and how do they contribute to lepton asymmetry?"}
+{"id": 260, "question": "What are the main findings in the research paper about Bose-Einstein condensation and its relation to quantum phenomena?"}
+{"id": 261, "question": "What are the main findings of the research on the ferromagnetic QCD vacuum's effect on EM LEC bounds, and how were these findings obtained?"}
+{"id": 262, "question": "What are the main findings in the research paper regarding the application of stochastic analysis and Bernoulli's inequality, and how do the methods used relate to the key results?"}
+{"id": 263, "question": "How do the researchers establish a relationship between temporal correlations and spatial correlations in their study, and what methods do they use to measure these correlations?"}
+{"id": 264, "question": "What methods does ACER use to analyze physics problem-solving, and what are the main findings of their research in this area?"}
+{"id": 265, "question": "What are the main findings regarding the impact of RSB on the stability of the XY model, and what methods were used to obtain these results?"}
+{"id": 266, "question": "How does physical argument support PL and PLC relations, and what are the main findings of this research in terms of methods used and key results?"}
+{"id": 267, "question": "What role does the self-consistent Green's function play in calculating electron density, and how does it affect the accuracy of the results?"}
+{"id": 268, "question": "What are the main findings in the research paper about the relationship between conjugation equations and semisimple Lie algebras, and how do the methods used contribute to the key results?"}
+{"id": 269, "question": "What is the relationship between the friction constant and noise levels, and how does the fluctuation-dissipation theorem explain this connection?"}
+{"id": 270, "question": "How does the derivative of the given formula impact the overall outcome of the research, and what are the key findings related to this specific calculation?"}
+{"id": 271, "question": "What are the key differences between MMFBM's continuous memory modulation and MFBM's reset memory structure, and how do these differences impact the models' performance?"}
+{"id": 272, "question": "What is the main goal of agents in solving optimization problems and how do they achieve it?"}
+{"id": 273, "question": "How does Theorem 2.1 relate to Ricci flow bounds and what are the implications of this relationship for the main findings of the research paper?"}
+{"id": 274, "question": "What role do constants play in exciton decoherence, and how do they affect the overall findings of the research paper?"}
+{"id": 275, "question": "What are the main findings of Einstein summation in simplifying index notation and how does it impact the methods used in this research paper?"}
+{"id": 276, "question": "What are the main findings of TDHF theory regarding damping in collective vibrations, and how do the methods used in this research lead to these key results?"}
+{"id": 277, "question": "What methods does RESSCAL3D++ use to refine its predictions and what are the key findings of this refinement process?"}
+{"id": 278, "question": "What methods does Multimodal-CL use to predict stroke risk and what are its main findings?"}
+{"id": 279, "question": "What are the main findings on how ASR errors impact the performance of lexical and dense retrievers in this research paper?"}
+{"id": 280, "question": "What are the main findings regarding the impact of anisotropy on linewidth in Kondo lattices, and how do the methods used in this research paper support these results?"}
+{"id": 281, "question": "What is the relationship between the cosmic ray fraction and star formation rate in NGC 3256 over a 10 million year period?"}
+{"id": 282, "question": "What are the limitations of SCA in addressing atom-field entanglement, and how do these limitations impact the research findings?"}
+{"id": 283, "question": "What is the relationship between the curvature at the peeling front and the peeling force, and how do the researchers measure this in their study?"}
+{"id": 284, "question": "What are the main findings of the research paper on Minkowski-Bouligand dimension and how does it relate to measuring image intricacy?"}
+{"id": 285, "question": "What methods were used to collect and filter issues, PRs, and commits in the research paper?"}
+{"id": 286, "question": "What methods does the proposed approach use to optimize deformable registration and what are the key findings of this research?"}
+{"id": 287, "question": "How does the algorithm generalize the model A_{h, t} and what are the implications of this generalization on the overall performance?"}
+{"id": 288, "question": "What are the main findings of the dual formulation function and how is its root computed?"}
+{"id": 289, "question": "What are the main findings regarding the intersection of curves and pseudo-discs in wedges, and how do the methods used in this research impact the key results?"}
+{"id": 290, "question": "What are the main findings and methods used in the research paper regarding LoRA, Compacter, and PEFT, and how do these models relate to each other?"}
+{"id": 291, "question": "What are the main findings of this research paper regarding the impact of formatting errors on paper submissions, and what methods were used to analyze this effect?"}
+{"id": 292, "question": "How do limited datasets impact traffic prediction model accuracy, and what methods can be used to improve model performance with restricted data?"}
+{"id": 293, "question": "What are the main findings of the research paper regarding the mono-energetic equation's impact on neutron transport, and how do the methods used support these findings?"}
+{"id": 294, "question": "What are the key properties of 0-homogeneous functions as discussed in Proposition 2.4 and how do they relate to the main findings of the research paper?"}
+{"id": 295, "question": "What are the main findings on how disorder strength affects the transport properties of nanowires in this research paper?"}
+{"id": 296, "question": "What methods do metasurfaces use to split polarized light and what are the key findings related to this phenomenon?"}
+{"id": 297, "question": "What are the main differences between GAR, DPR, and BPR in the context of this research paper, and how do their methods and key results compare?"}
+{"id": 298, "question": "What are the main properties of halo stars that provide insights into galaxy formation, and how do researchers typically study these properties to understand the formation and evolution of galaxies?"}
+{"id": 299, "question": "How did seeing conditions impact spectroscopic observations in this study, and what methods were used to account for their effects on the results?"}
+{"id": 300, "question": "What are the main findings regarding power-law forms in the inertial and dissipation ranges, and how were these findings obtained?"}
+{"id": 301, "question": "What are the main findings of the research on spin implications on Lie superalgebra reductions and how do the methods used impact the key results?"}
+{"id": 302, "question": "What are the main findings of the research on charmonium-nucleon potential and its effect on nuclear-bound states?"}
+{"id": 303, "question": "What role do Cartan angles play in the context of REF, and how do they influence the main findings of this research paper?"}
+{"id": 304, "question": "What are the main findings related to inequalities in this research paper and how do the authors apply them to their methods and results?"}
+{"id": 305, "question": "What are the main findings regarding the uniqueness of zero function solutions in this research paper, and how do the methods used contribute to these results?"}
+{"id": 306, "question": "What are the main findings regarding the effect of strain on orbital polarization in nickelates, and how do the researchers' methods contribute to these results?"}
+{"id": 307, "question": "What methods are used in the research paper to demonstrate how encoding prevents degree loss in polynomial, and what are the main findings regarding its effectiveness?"}
+{"id": 308, "question": "How does MPDAG represent causal inference in the context of this research paper, and what are its key findings and methods?"}
+{"id": 309, "question": "What are the main findings regarding the impact of an increased Ekman number on bifurcation types in this research paper?"}
+{"id": 310, "question": "What are the main findings on how major mergers trigger AGN activity and what methods were used to obtain these results?"}
+{"id": 311, "question": "How does the reduction of spherical symmetry in 4D theories impact the overall complexity and outcomes of the research, and what are the main findings related to this simplification?"}
+{"id": 312, "question": "What are the main findings regarding the effect of collision on gas density in this research paper?"}
+{"id": 313, "question": "What are the main findings in the research paper regarding the relationship between blazars' spectral energy distributions and leptonic or hadronic processes?"}
+{"id": 314, "question": "How do the larger receptive fields in CNNs affect the consistency of local features in image recognition tasks?"}
+{"id": 315, "question": "How does the combination of DUNE and T2HK experiments resolve the degeneracy between GRB and HG, and at what confidence level?"}
+{"id": 316, "question": "What are the main findings in this research paper regarding the impact of a light stop's mass on SUSY models, and how do the methods used affect the key results?"}
+{"id": 317, "question": "What role does the cosmic microwave background optical depth play in the formation of Population III stars, and how do the findings of Planck's CMB research impact our understanding of this process?"}
+{"id": 318, "question": "What are the main findings regarding how particles alter interface energy in this research paper?"}
+{"id": 319, "question": "How do the article reference counts in WoS and Scopus compare in terms of accuracy and comprehensiveness?"}
+{"id": 320, "question": "What is the relationship between zero modes and the commutation of modular Hamiltonians, and how do the main findings of this research paper explain this connection?"}
+{"id": 321, "question": "What are the critical magnitudes of PRBM and Anderson transitions, and how do they relate to the main findings of this research paper?"}
+{"id": 322, "question": "How do PID controllers and camera feeds enable robot motion regulation in the context of this research paper, and what are the main findings regarding their effectiveness?"}
+{"id": 323, "question": "What are the main findings and key results of the research on Palais-Smale sequences, and what methods were used to obtain these results?"}
+{"id": 324, "question": "What is the relationship between quark masses and binding energies in particle physics, and how do researchers measure this correlation?"}
+{"id": 325, "question": "What are the main findings regarding the decay of active bond fraction in surviving runs over time, and how do the methods used in this research paper support these results?"}
+{"id": 326, "question": "How do dark matter and anisotropy stabilize neutron stars, and what are the main findings of this research?"}
+{"id": 327, "question": "What role did Doppler tomography and transit models play in determining the inclination and impact in the research, and how did the findings contribute to the overall understanding of the subject?"}
+{"id": 328, "question": "What are the main findings of the research on Vlasov/N-body simulation and its impact on Universe structure formation, and how do the methods used in this study contribute to our understanding of key results in this field?"}
+{"id": 329, "question": "What role does k-perp-factorization play in the calculation of perturbative invariants, and how does it impact the overall results of the research?"}
+{"id": 330, "question": "What are the main findings of the superstring field equation of motion, and how do the methods used in this research relate to its key results?"}
+{"id": 331, "question": "What are the main findings regarding the impact of angular momentum on boson behavior under perturbation in this research paper?"}
+{"id": 332, "question": "What are the main findings in the research paper regarding strong ergodicity and condition satisfaction, and how do the methods used relate to the key results?"}
+{"id": 333, "question": "What is the relationship between G_j, p_j and Carathéodory convergence in the context of this research paper?"}
+{"id": 334, "question": "What role does galaxy mass play in the formation of r-process stars, and how do the main findings of this research paper support this relationship?"}
+{"id": 335, "question": "What role does graph theory play in enhancing robust control, and how do its methods contribute to the main findings of this research?"}
+{"id": 336, "question": "What are the main findings on how voxel-based methods' information loss and compression affect event-based vision, and how do these methods impact the overall quality of the vision?"}
+{"id": 337, "question": "What is the relationship between D_L, D_M, and redshift z, and how do these parameters impact the main findings of the research paper?"}
+{"id": 338, "question": "What are the main findings on how attackers' skills affect the effectiveness of fingerprint presentation attack detection, and what methods were used to obtain these results?"}
+{"id": 339, "question": "What are the main characteristics of Calabi-Yau 3-folds according to Definition 1.1 and how do these characteristics relate to the main findings of the research paper?"}
+{"id": 340, "question": "What are the main findings in the research paper about vector space structure and its relation to modules, and how do the methods used impact the key results?"}
+{"id": 341, "question": "What are the main findings of the H(T) model in regards to electron dynamics, and how do the methods used in this research contribute to our understanding of this phenomenon?"}
+{"id": 342, "question": "What role does preferential attachment play in the diffusion of infections, and how do the main findings of this research paper support this concept?"}
+{"id": 343, "question": "What are the main findings of the research paper on simulation-based inference in health policy, and how do the methods used support the key results?"}
+{"id": 344, "question": "What are the main findings regarding the impact of data scarcity and appearance changes on age progression in this research paper?"}
+{"id": 345, "question": "What are the main findings of neutrino experiments and how do they affect the validity of the MSW scenario?"}
+{"id": 346, "question": "What role does associativity play in the algebra's product, and how does it impact the research findings?"}
+{"id": 347, "question": "What are the main differences in optimization efficiency between the Newton-Raphson and Conjugate Gradient methods, and how do their findings relate to the research paper's key results?"}
+{"id": 348, "question": "What are the main findings in the research paper regarding the relationship between surface gravity and gravitational charge in black hole dynamics?"}
+{"id": 349, "question": "What are the main findings of Algorithm REF's complexity when updating scaled forms, and how do the methods used impact the key results?"}
+{"id": 350, "question": "How do the variables s, t, and u relate to the parameters M, rho, q_T, p_T, and z in the context of this research paper?"}
+{"id": 351, "question": "What methods are used in image segmentation to partition pixels into distinct objects, and what are the key findings of this research in terms of object recognition?"}
+{"id": 352, "question": "What is the significance of LMC's PM range in relation to 1.5-2.0 mas yr, and how does it impact the research findings?"}
+{"id": 353, "question": "What are the key optimizations used in the push-relabel algorithm to improve flow, and how do these optimizations impact the overall performance of the method?"}
+{"id": 354, "question": "What are the main findings of Ptolemy's complex in relation to ideal triangulations, and how do the methods used impact the key results?"}
+{"id": 355, "question": "What are the main findings of future CMB observations regarding neutrino mass and how do the methods used in this research impact the key results?"}
+{"id": 356, "question": "What portion of the aggregate problem does this research paper address, and how does it contribute to the overall understanding of the issue?"}
+{"id": 357, "question": "What is the relationship between ladder operators and spectrum-generating operators in the context of this research paper?"}
+{"id": 358, "question": "What is the significance of density in the context of Lebesgue measure and how does it impact the main findings of this research paper?"}
+{"id": 359, "question": "What is the relationship between d81 and 6101bac7 in the context of this research paper?"}
+{"id": 360, "question": "What is the relationship between C and quark mass, and how do the research findings support this connection?"}
+{"id": 361, "question": "What is the role of Stirling numbers in the research paper and how do they relate to the main findings?"}
+{"id": 362, "question": "What is the significance of orthogonal vectors in the context of the Minkowski metric, and how do they impact the main findings of this research paper?"}
+{"id": 363, "question": "What are the main coefficients of theta series and how are they used in the research paper?"}
+{"id": 364, "question": "How does Lemma 3.4 contribute to the existence of unique solutions in the research paper?"}
+{"id": 365, "question": "What are the main findings in the research paper regarding the relationship between Penrose diagrams and spacetime's global structure, and how do the methods used support these findings?"}
+{"id": 366, "question": "What are the main findings in the research paper regarding the relationship between isoscaling and the nuclear equation of state, and how do the methods used impact the key results?"}
+{"id": 367, "question": "What role does CKM quark mixing play in causing CP violation, and how is this phenomenon observed in the research findings?"}
+{"id": 368, "question": "What are the main findings in the research paper about Ricci limit spaces and how do boundaries relate to them?"}
+{"id": 369, "question": "What is the role of ellipses in spectrum enclosure via Gershgorin's theorem and how does it relate to the main findings of this research paper?"}
+{"id": 370, "question": "What is the relationship between quark mass and the range of gluon condensate, and how do the research findings support this connection?"}
+{"id": 371, "question": "What are the main findings of this research paper on defining a tuple of terms via induction, and how do the methods used contribute to the key results?"}
+{"id": 372, "question": "How does the batch normalization layer evaluate the importance of each channel in the neural network, and what methods are used to determine this importance?"}
+{"id": 373, "question": "What are the main implications of Corollary 4.21 on the formulas presented in the research paper?"}
+{"id": 374, "question": "What are the main findings in the research paper regarding the relationship between automorphisms and universal coverings, and how do the authors' methods contribute to these results?"}
+{"id": 375, "question": "What are the main findings of the Hutchinson-Skilling estimator and how does it simplify computing Delta v_phi?"}
+{"id": 376, "question": "What are the main findings of the Anderson model regarding disorder impact on localization in tree graphs, and how do the methods used affect the key results?"}
+{"id": 377, "question": "What evidence do annihilations provide for the existence of specific particles, and how do researchers interpret these findings?"}
+{"id": 378, "question": "What are the main connections between polylogarithm and hypergeometric functions in the context of this research paper?"}
+{"id": 379, "question": "What methods does the database use to fill gaps in stellar models and what are the main findings of this research?"}
+{"id": 380, "question": "What are the main differences between RTA's coefficient value and those reported in previous studies, and how do these differences impact the research findings?"}
+{"id": 381, "question": "How do the formulas in this research paper imply disjoint sets for almost all variables, and what are the key findings related to this concept?"}
+{"id": 382, "question": "What are the main findings of JT gravity in describing 2D space, and what methods were used to achieve these results?"}
+{"id": 383, "question": "How does the scheme enhance the accuracy of ISRF model predictions, and what methods are used to achieve this improvement?"}
+{"id": 384, "question": "What are the main properties of a dyadic tree and how are they utilized in research papers?"}
+{"id": 385, "question": "What are the key similarities and differences between very well-covered graphs and unmixed bipartite graphs, and how do the main findings of this research relate to their structures and properties?"}
+{"id": 386, "question": "How does the parton shower affect the transverse momentum of the 4-lepton system in this research paper?"}
+{"id": 387, "question": "What are the main findings in the research paper regarding the relationship between constants of motion and Bessel equation solutions, and how do the methods used impact the key results?"}
+{"id": 388, "question": "What role does contextuality play in enabling quantum computation and what are the main findings of the research on this topic?"}
+{"id": 389, "question": "How does the metallicity of LMC, measured in dex, impact its overall composition and what are the key findings related to this in the research paper?"}
+{"id": 390, "question": "What is the relationship between dL and dA via DDR, and how do the research findings support this connection?"}
+{"id": 391, "question": "What is the relationship between HP Regge trajectory and eikonal, and how do the main findings of this research paper explain their impact on each other?"}
+{"id": 392, "question": "What are the main findings regarding nilpotency in Fitting classes and how do the methods used in this research contribute to the overall understanding of this concept?"}
+{"id": 393, "question": "What are the main findings of the research paper on PZW representation in relation to light-matter interaction, and how do the methods used contribute to the key results?"}
+{"id": 394, "question": "How do unitarily equivalent systems preserve frame properties, and what are the key findings related to this concept in the research paper?"}
+{"id": 395, "question": "What methods does P2LDGAN use to generate line drawings and what are its key findings in terms of image quality and realism?"}
+{"id": 396, "question": "What are the main research findings of A.V. Kotwal, M. Kreps, and J. Kroll, and which universities are they affiliated with?"}
+{"id": 397, "question": "What were the main findings of Goddard's study on alpha-agostic interactions and how did they impact our understanding of the subject?"}
+{"id": 398, "question": "What role do matched pairs of groups play in shaping tensor categories, and how do these interactions influence the main findings of the research paper?"}
+{"id": 399, "question": "What are the main findings of the ab initio approach in describing nuclear phenomena, and how do the methods used contribute to the key results?"}
+{"id": 400, "question": "What are the main findings of PIC simulations regarding non-thermal emission, and how do the methods used in these simulations contribute to the key results?"}
+{"id": 401, "question": "What is the significance of eigenvalues in understanding the gaps in Theorem 5.1, and how do they impact the overall findings of the research paper?"}
+{"id": 402, "question": "What is the relationship between MAP models and PAC-Bayesian bounds, and how do the main findings of this research paper apply to these concepts?"}
+{"id": 403, "question": "What role do magnetic fields play in guiding electrons within the MAC-E filter, and how do the main findings of this research relate to its methods and key results?"}
+{"id": 404, "question": "What is the relationship between Psi_CL, phi, and psi_i in the context of this research paper?"}
+{"id": 405, "question": "How does spatialization contribute to pre-attentive perception in the context of this research, and what methods were used to study its effects?"}
+{"id": 406, "question": "What are the main findings regarding jet formation when bubbles collapse near porous boundaries, and how do the methods used in this research contribute to the understanding of this phenomenon?"}
+{"id": 407, "question": "What methods are used to find 3D knot embeddings that match target images, and what are the key results of this research?"}
+{"id": 408, "question": "What are the main findings of the research on EOSs and their impact on relativistic star equilibrium, and how do the methods used in the study contribute to the key results?"}
+{"id": 409, "question": "What effect does Pb substitution have on the structure and properties of Bi-O pockets in Bi2223, and how does this impact the overall performance of the material?"}
+{"id": 410, "question": "What are the main findings of the research on Born-Infeld Lagrangian in the context of non-linear electrodynamics, and how do the methods used relate to the key results?"}
+{"id": 411, "question": "What methods does the research paper use to filter out low frequency noise in SDI, and what are the key findings regarding its effectiveness?"}
+{"id": 412, "question": "How does the SF formalism in the research paper preserve symmetry when using domain-wall fermions, and what are the key findings related to this method?"}
+{"id": 413, "question": "What are the main findings regarding the impact of small positive perturbations on the ground state of a Hamiltonian system, and how do the methods used in this research paper support these findings?"}
+{"id": 414, "question": "How do polynomial coordinates contribute to achieving cage-aware deformations in the research paper, and what are the key findings related to this method?"}
+{"id": 415, "question": "What are the main findings of this research paper regarding unobservable category representations and how do they impact the research methodology and key results?"}
+{"id": 416, "question": "What are the main findings on how quantum synchronisation affects the efficiency of nanoscale heat engines, and what methods were used to obtain these results?"}
+{"id": 417, "question": "What is the main role of the SEL method in galaxy surveys and how does it contribute to the research findings?"}
+{"id": 418, "question": "How do the invariance principle and Central Limit Theorem apply to the analysis of spiked eigenvalues in this research paper, and what are the key findings related to their application?"}
+{"id": 419, "question": "What role do encodings play in improving optimization outcomes in discrete systems, and how do the methods used in this research contribute to these enhancements?"}
+{"id": 420, "question": "What is the relationship between girth and 2-distance chromatic number in graphs, and how do the main findings of this research paper support this relationship?"}
+{"id": 421, "question": "How does Theorem 6.13 determine the order of contact and what are its implications for the research findings?"}
+{"id": 422, "question": "What are the main findings on how dwarf galaxy dynamics influence metal-rich star formation, and what methods were used to obtain these results?"}
+{"id": 423, "question": "What is the relationship between BCS condensate amplitude and molecular density, and how do they impact the main findings of this research paper?"}
+{"id": 424, "question": "What are the main findings on the interaction between viscous, inertial, and newly found regimes in this research paper?"}
+{"id": 425, "question": "What is the relationship between nucleus radius and constrained energy, and how does it impact the overall findings of the research paper?"}
+{"id": 426, "question": "What are the main implications of Theorem 1.3 for Stein manifolds, and how does it relate to the overall findings of the research paper?"}
+{"id": 427, "question": "What role do frequency coefficients play in understanding spin imbalance dynamics, and how do the research findings relate to this phenomenon?"}
+{"id": 428, "question": "How does local connectivity affect population heterogeneity when global resources are varied, and what are the main findings of this research in relation to these dynamics?"}
+{"id": 429, "question": "What are the main findings in the research paper about skew polynomial rings and their connection to essential extensions, and how do the methods used contribute to these key results?"}
+{"id": 430, "question": "What is the relationship between IC-SDW order and the FFLO phase, and how do the main findings of this research paper explain their connection?"}
+{"id": 431, "question": "What are the main findings regarding the impact of surface-ordered exponentials on non-Abelian 2-forms in this research paper?"}
+{"id": 432, "question": "What methods does the research paper use to optimize ABS's search path through backtracking, and what are the key findings regarding its effectiveness?"}
+{"id": 433, "question": "How does the sample size used in this research impact the detection of metallicity components, and what methods were employed to determine this relationship?"}
+{"id": 434, "question": "What methods does ARwild use to reconstruct 3D avatars and what are the key findings of this research?"}
+{"id": 435, "question": "What are the main findings on how similar and dissimilar patterns affect graph permutations in the research paper, and what methods were used to obtain these results?"}
+{"id": 436, "question": "What methods does the research paper use to simplify car control with LFBL, and what are the main findings regarding its effectiveness?"}
+{"id": 437, "question": "What is the role of eigenvectors in equations of motion and how do they relate to the main findings of this research paper?"}
+{"id": 438, "question": "What are the main findings on how light pulses induce metallic states in 1T-TaS2, and what methods were used to achieve these results?"}
+{"id": 439, "question": "What are the main findings regarding quaternionic potentials and their impact on particle motion in this research paper?"}
+{"id": 440, "question": "What methods do the proposed algorithms use to generate MDS matrices and what are the key findings related to their performance?"}
+{"id": 441, "question": "How does the concept of metric independence impact the parametrization of manifolds in this research paper?"}
+{"id": 442, "question": "What methods does XPDWM use to reproduce NLVCs and what are the key findings of this process?"}
+{"id": 443, "question": "What is the relationship between CBFS parameters and rate-latency service curves, and how do they impact the main findings of this research paper?"}
+{"id": 444, "question": "What is the relationship between Hawking temperature and entropy, and how do the research findings support this connection?"}
+{"id": 445, "question": "What are the main findings of the research on pose entanglement and its impact on 3D shape learning, and how do the methods used contribute to these findings?"}
+{"id": 446, "question": "What role does the seesaw mechanism play in determining the mass of active neutrinos, and how does it relate to the research paper's main findings?"}
+{"id": 447, "question": "What are the main findings regarding the impact of square root singularity on stress at cusps in this research paper?"}
+{"id": 448, "question": "What are the main enhancements of ConvL2LFlow in calorimeter simulation and how do they improve the overall performance?"}
+{"id": 449, "question": "What are the main findings on how laser chirality affects angular momentum in the research paper, and what methods were used to obtain these results?"}
+{"id": 450, "question": "What are the main differences between the Min and Latest functions in milling, and how do they impact the overall process?"}
+{"id": 451, "question": "What are the main differences in side-pairing between hyperbolic equivalents, and how do these differences impact the overall structure?"}
+{"id": 452, "question": "What are the implications of zero formal dimension on the emptiness of moduli space, and how do the research findings support this concept?"}
+{"id": 453, "question": "How do the local structure of X_S points relate to the properties of pi, and what makes pi a regular or special number in this context?"}
+{"id": 454, "question": "How do FF ratios vary with multiplicity in the context of this research paper, and what methods were used to determine this relationship?"}
+{"id": 455, "question": "What is the relationship between difference spectra and flare energy, and how do the research findings support this connection?"}
+{"id": 456, "question": "What are the main findings on how band reduction affects the KIVC strain interval in this research paper?"}
+{"id": 457, "question": "What does the term alpha refer to in the context of NIST STS, and how is it used in the research paper?"}
+{"id": 458, "question": "What role do gauge boson masses play in determining the critical temperature, and how do the research findings support this relationship?"}
+{"id": 459, "question": "How does ball-tree partitioning facilitate data point organization in the context of this research paper, and what are its key benefits?"}
+{"id": 460, "question": "What are the main findings of the research paper on extending the zero-free region and how does it affect the Euler product's sphere of influence?"}
+{"id": 461, "question": "What are the main findings regarding Perseus' non-thermal X-ray relation to Active Galactic Nuclei (AGN) in this research paper?"}
+{"id": 462, "question": "What are the main findings of the research on Higgs portal DM's interactions and how do they affect direct detection methods?"}
+{"id": 463, "question": "What is the relationship between CR invariants and weights in the context of this research paper?"}
+{"id": 464, "question": "What are the main findings regarding unitarity violation at high CM energy and its impact on scattering in this research paper?"}
+{"id": 465, "question": "What effect does W approaching 0 have on the formation of C_{S,R}, and how does this relate to the main findings of the research paper?"}
+{"id": 466, "question": "What is the significance of Proposition 5.1 in relation to the stable locus, and how does it contribute to the overall findings of the research paper?"}
+{"id": 467, "question": "What role does rotational periodicity play in High Harmonic Generation and how does it impact the resulting spectra?"}
+{"id": 468, "question": "What methods does the framework use to demonstrate MapReduce-imperative equivalence, and what are the key findings of this research?"}
+{"id": 469, "question": "What role do knot invariants play in coloring, and how do the main findings of this research paper relate to their methods and key results?"}
+{"id": 470, "question": "How does prior knowledge affect the relaxation of PE conditions in this study, and what methods were used to measure its impact?"}
+{"id": 471, "question": "How do the parameters rho_0 and rho_1 relate to each other through the variable Z in the context of this research paper?"}
+{"id": 472, "question": "What are the main enhancements of the TD framework extension to Q-Learning, and how do these improvements impact the overall performance of the algorithm?"}
+{"id": 473, "question": "What are the main differences between profinite case and other cases in the research paper, and how do the methods used to study profinite case impact the key results?"}
+{"id": 474, "question": "What role do quadratic subproblems play in affecting the scalability of networks, and how do the researchers address this issue in their findings?"}
+{"id": 475, "question": "What are the conditions under which a linear CP map qualifies as a quantum channel, and how does this relate to the main findings of the research paper?"}
+{"id": 476, "question": "What is the definition of a homogeneous tree and how is it applied in research?"}
+{"id": 477, "question": "What role does tilt-invariance play in the Kelvin-wave cascade, and how does it affect the main findings of this research paper?"}
+{"id": 478, "question": "What are the main findings regarding the impact of contaminations on Gadolinium data analysis in this research paper?"}
+{"id": 479, "question": "What are the main findings in the research paper regarding the relationship between height function and conformal classes, and how do the methods used impact the key results?"}
+{"id": 480, "question": "What methods are used to compress control qubits onto wave functions and what are the main findings of this process in the research paper?"}
+{"id": 481, "question": "How does device density impact STAR-RIS outage probability, and what are the main findings of this research regarding the relationship between device density and outage probability?"}
+{"id": 482, "question": "What methods do encoder layers use to generate input sequence representations, and what are the key findings related to their effectiveness in this research paper?"}
+{"id": 483, "question": "What are the main findings of Theorem REF and how does it imply uniqueness and existence in the research paper?"}
+{"id": 484, "question": "How do estimators based on nonlinear increments relate to jump diffusion analysis in the context of this research paper?"}
+{"id": 485, "question": "What is the geometric relationship between Phi and gamma_0 in the context of this research paper?"}
+{"id": 486, "question": "What methods does SpinView use to simplify magnetic data analysis and what are the main findings of this approach?"}
+{"id": 487, "question": "What role do supernova asymmetries play in the formation of black hole pairs, and how do the methods used in this research paper support these findings?"}
+{"id": 488, "question": "What is the relationship between formation energy and material stability, and how do researchers use this concept to predict material properties?"}
+{"id": 489, "question": "What are the main findings of the research on Burau relations and how do they contribute to our understanding of the subject?"}
+{"id": 490, "question": "How does COCO enhance code generation robustness?"}
+{"id": 491, "question": "What are the key steps involved in transforming the sinh-Gordon equation into the sine-Gordon equation, and how do the main findings of this research relate to these transformations?"}
+{"id": 492, "question": "What methods does GPTEval3D use to assess the quality of edited images, and what are its key findings on this topic?"}
+{"id": 493, "question": "What role do axion-gluon couplings play in enhancing the sensitivity of NMR axion detection, and how do the research findings contribute to our understanding of axion physics?"}
+{"id": 494, "question": "What role does intrinsic scatter play in estimating black hole mass, and how do the methods used in this research paper account for its impact on the accuracy of these estimates?"}
+{"id": 495, "question": "What are the main findings in the research paper regarding the relationship between GHZ-nonlocality and time-local realism in quantum mechanics?"}
+{"id": 496, "question": "What are the main findings of the research on tensor-pentagon diagrams' role in amplitude, and how do the methods used contribute to the key results?"}
+{"id": 497, "question": "What are the main findings of Theorem REF in relation to Hermitian groups and how do the methods used in the research lead to these key results?"}
+{"id": 498, "question": "What is the relationship between wavelength and polarization transformation in the context of this research paper?"}
+{"id": 499, "question": "What are the main findings regarding the impact of 3-body interactions on the phases of spin-1 Bose gases, and how do the methods used in this research paper support these findings?"}
+{"id": 500, "question": "What role does electron influence play in the functional impact of weak localization, and how do the researchers measure this effect in their study?"}
+{"id": 501, "question": "What methods are used to capture high-resolution images of hot Jupiter flow features, and what are the main findings of this research?"}
+{"id": 502, "question": "What is the relationship between stellar flux ratio and dust scattering, and how does it impact our understanding of the research findings?"}
+{"id": 503, "question": "What role do van der Waals interactions play in determining the force between molecules, and how do researchers measure their effects?"}
+{"id": 504, "question": "What is the relationship between the signal-to-noise ratio and the R coefficient in this study, and how do the researchers measure its impact on the results?"}
+{"id": 505, "question": "What are the limitations of the Rayleigh approximation when applied to conducting needles, and how do these limitations affect the accuracy of the results?"}
+{"id": 506, "question": "What role does SU(1,1) symmetry play in the analysis of two-photon effects, and how do the researchers utilize this symmetry in their findings?"}
