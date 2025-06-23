@@ -19,12 +19,14 @@ from llama_index.core import Document
 from llama_index.retrievers.bm25 import BM25Retriever
 import Stemmer
 from llama_index.core.storage.docstore import SimpleDocumentStore
+
 # ─── USER CONFIG ───────────────────────────────────────────────────────────────
-DATA_DIR = "/data/horse/ws/inbe405h-unarxive/test"   # JSONL root directory
-PERSIST_DIR = "/data/horse/ws/inbe405h-unarxive/bm25_retriever" # where the BM25 index will be saved
+DATA_DIR = "/data/horse/ws/inbe405h-unarxive/test"  # JSONL root directory
+PERSIST_DIR = "/data/horse/ws/inbe405h-unarxive/bm25_retriever"  # where the BM25 index will be saved
 DOCSTORE_PATH = os.path.join(PERSIST_DIR, "docstore.json")
-TOP_K = 5                              # how many docs to return per query
+TOP_K = 5  # how many docs to return per query
 # ────────────────────────────────────────────────────────────────────────────────
+
 
 def _parse_jsonl_file(file_path):
     """
@@ -41,22 +43,27 @@ def _parse_jsonl_file(file_path):
                 abstract = paper.get("abstract", "")
                 sections = paper.get("sections", {}) or {}
                 sections_text = " ".join(
-                    f"{sec}: {obj.get('text','')}" for sec, obj in sections.items() if isinstance(obj, dict)
+                    f"{sec}: {obj.get('text','')}"
+                    for sec, obj in sections.items()
+                    if isinstance(obj, dict)
                 )
                 content = f"{title}. {abstract}"
-                full_text = f"{title}. {abstract}. {sections_text}" 
-                docs.append(Document(
-                    content=content,
-                    meta={
-                        "paper_id": paper.get("paper_id", ""),
-                        "title": title,
-                        "authors": meta.get("authors", []),
-                        "full_text": full_text
-                    }
-                ))
+                full_text = f"{title}. {abstract}. {sections_text}"
+                docs.append(
+                    Document(
+                        content=content,
+                        meta={
+                            "paper_id": paper.get("paper_id", ""),
+                            "title": title,
+                            "authors": meta.get("authors", []),
+                            "full_text": full_text,
+                        },
+                    )
+                )
             except json.JSONDecodeError:
                 continue
     return docs
+
 
 def load_documents(data_dir):
     """Walk data_dir for .jsonl, parse each in parallel, return flat list of Documents."""
@@ -72,6 +79,7 @@ def load_documents(data_dir):
     print(f"Loaded a total of {len(docs)} documents")
     return docs
 
+
 def build_and_persist_bm25(docs, persist_dir):
     """Builds a BM25Retriever over `docs` and persists it to disk."""
     # 1) Create the retriever
@@ -82,12 +90,13 @@ def build_and_persist_bm25(docs, persist_dir):
         docstore=docstore,
         similarity_top_k=TOP_K,
         stemmer=Stemmer.Stemmer("english"),
-        language="english"
+        language="english",
     )
     # 2) Persist the index
     retriever.persist(persist_dir)
     print(f"BM25 index built and saved to {persist_dir}")
     return retriever
+
 
 def load_bm25(persist_dir):
     """Reloads a persisted BM25Retriever from disk."""
@@ -95,18 +104,19 @@ def load_bm25(persist_dir):
     print(f"BM25 index loaded from {persist_dir}")
     return retriever
 
+
 def demo_query(retriever, query):
     """Run a sample query and print results."""
     print(f"\n Query: “{query}”\n")
     results = retriever.retrieve(query)
     for i, res in enumerate(results, 1):
-        text_snip = res.node.get_text()[:].replace("\n"," ")
+        text_snip = res.node.get_text()[:].replace("\n", " ")
         print(f"{i}. [score={res.score:.4f}] {text_snip}…")
     print()
 
+
 if __name__ == "__main__":
     # Step 1: Parse and load
-    
 
     # Step 2: Build & persist
     if not os.path.exists(PERSIST_DIR):
