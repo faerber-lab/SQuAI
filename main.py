@@ -18,18 +18,19 @@ DEFAULT_ALPHA = 0.65
 db = None
 ragent = None
 
+
 @app.on_event("startup")
 def startup_event():
     global db, ragent
     db = plyvel.DB(DB_PATH, create_if_missing=False)
-    
+
     retriever = initialize_retriever(
         retriever_type=DEFAULT_RETRIEVER,
         e5_index_dir=E5_INDEX_DIR,
         bm25_index_dir=BM25_INDEX_DIR,
         db_path=DB_PATH,
         top_k=DEFAULT_TOP_K,
-        alpha=DEFAULT_ALPHA
+        alpha=DEFAULT_ALPHA,
     )
 
     ragent = Enhanced4AgentRAG(
@@ -37,13 +38,15 @@ def startup_event():
         agent_model=DEFAULT_MODEL,
         n=DEFAULT_N_VALUE,
         index_dir=BM25_INDEX_DIR,  # Change if needed
-        max_workers=6
+        max_workers=6,
     )
+
 
 @app.on_event("shutdown")
 def shutdown_event():
     if db is not None:
         db.close()
+
 
 # This model is used for dynamic POST requests
 class QueryRequest(BaseModel):
@@ -54,23 +57,24 @@ class QueryRequest(BaseModel):
     retrieval_method: Optional[str] = DEFAULT_RETRIEVER
     n_value: Optional[float] = DEFAULT_N_VALUE
     top_k: Optional[int] = DEFAULT_TOP_K
-    alpha: Optional[float] = DEFAULT_ALPHA    
+    alpha: Optional[float] = DEFAULT_ALPHA
+
 
 @app.post("/split")
 def split_question(req: QueryRequest):
-    should_split, sub_questions = ragent.question_splitter.analyze_and_split(req.question)
+    should_split, sub_questions = ragent.question_splitter.analyze_and_split(
+        req.question
+    )
     return {
         "should_split": should_split,
         "sub_questions": sub_questions if should_split else [],
-        "original_question": req.question
+        "original_question": req.question,
     }
+
 
 @app.post("/ask")
 def ask_question(req: QueryRequest):
-    result, references, debug_info = ragent.answer_query(req.question, db, should_split=req.should_split, sub_questions=req.sub_questions)
-    return {
-        "answer": result,
-        "references": references,
-        "debug_info": debug_info
-    }
-
+    result, references, debug_info = ragent.answer_query(
+        req.question, db, should_split=req.should_split, sub_questions=req.sub_questions
+    )
+    return {"answer": result, "references": references, "debug_info": debug_info}

@@ -92,7 +92,7 @@ class HaystackRetriever:
                     f"E5 query took {elapsed:.2f}s - model may have reloaded!"
                 )
             else:
-                logger.info(f"E5 query took {elapsed:.2f}s (good!)")
+                logger.info(f"⚡ E5 query took {elapsed:.2f}s (good!)")
 
         return docs
 
