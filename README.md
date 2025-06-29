@@ -46,7 +46,7 @@ S_{hybrid}(d) = \alpha \cdot S_{sparse}(d) + (1 - \alpha) \cdot S_{dense}(d)
 
 ---
 
-## 🖥️ User Interface
+## User Interface
 
 SQuAI includes an interactive web-based UI built with **Streamlit** and backed by a **FastAPI** server. Key features include:
 
