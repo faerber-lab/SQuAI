@@ -45,15 +45,6 @@ python run_SQuAI.py --model tiiuae/Falcon3-10B-Instruct --n 0.5 --alpha 0.65 --t
 - `--output_format`: Output format - json, jsonl, or debug (default: jsonl)
 - `--output_dir`: Directory to save results (default: "results")
 
-### Key Features
-
-- **Multi-agent architecture** for decomposing and answering complex questions
-- **Hybrid retrieval system** (sparse + dense) optimized for scientific literature
-- **In-line citations** and **citation context** for transparent and verifiable answers
-- **User interface** for configurable, interactive QA with support for multiple retrieval/generation settings
-- Supports over **2.3 million full-text arXiv papers** via the [unarXive 2024](https://huggingface.co/datasets/ines-besrour/unarxive_2024) dataset
-- **Benchmark of 1,000 QA-evidence pairs** for evaluation
-
 ### System Architecture
 
 SQuAI consists of four key agents working collaboratively to deliver accurate, faithful, and verifiable answers:
