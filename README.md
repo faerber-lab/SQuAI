@@ -100,7 +100,7 @@ Evaluation metrics (via [DeepEval](https://deepeval.com)) include:
 - **Contextual Relevance** – How well the answer integrates retrieved evidence.
 - **Faithfulness** – Whether the answer is supported by cited sources.
 
-SQuAI improves combined scores by up to **12%** in faithfulness compared to a strong RAG baseline.
+SQuAI improves combined scores by up to **12%** in faithfulness compared to a standard RAG baseline.
 
 ### Dataset & Resources
 
