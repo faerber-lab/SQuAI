@@ -1,21 +1,19 @@
-# SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation
+## SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation
 
 SQuAI is a scalable and trustworthy **multi-agent Retrieval-Augmented Generation (RAG)** system for scientific question answering (QA). It is designed to address the challenges of answering complex, open-domain scientific queries with high relevance, verifiability, and transparency. This project is introduced in our CIKM 2025 demo paper:  
 
 Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.be)
----
 
-## Key Features
+### Key Features
 
 - **Multi-agent architecture** for decomposing and answering complex questions
 - **Hybrid retrieval system** (sparse + dense) optimized for scientific literature
 - **In-line citations** and **citation context** for transparent and verifiable answers
 - **User interface** for configurable, interactive QA with support for multiple retrieval/generation settings
 - Supports over **2.3 million full-text arXiv papers** via the [unarXive 2024](https://huggingface.co/datasets/ines-besrour/unarxive_2024) dataset
-- Comes with a **benchmark of 1,000 QA-evidence pairs** for evaluation
----
+- **Benchmark of 1,000 QA-evidence pairs** for evaluation
 
-## System Architecture
+### System Architecture
 
 SQuAI consists of four key agents working collaboratively to deliver accurate, faithful, and verifiable answers:
 
@@ -44,9 +42,7 @@ S_{hybrid}(d) = \alpha \cdot S_{sparse}(d) + (1 - \alpha) \cdot S_{dense}(d)
 ```
 \(\alpha = 0.65\), based on empirical tuning. This slightly favors dense retrieval while retaining complementary signals from sparse methods, ensuring both semantic relevance and precision.
 
----
-
-## User Interface
+### User Interface
 
 SQuAI includes an interactive web-based UI built with **Streamlit** and backed by a **FastAPI** server. Key features include:
 
@@ -57,9 +53,8 @@ SQuAI includes an interactive web-based UI built with **Streamlit** and backed b
 - Display of generated answers with **fine-grained in-line citations**.
 - Clickable references linking to original arXiv papers.
 
----
 
-## Benchmarks & Evaluation
+### Benchmarks & Evaluation
 
 We evaluate SQuAI using three QA datasets designed to test performance across varying complexity levels:
 
@@ -75,18 +70,10 @@ Evaluation metrics (via [DeepEval](https://deepeval.com)) include:
 
 SQuAI improves combined scores by up to **12%** in faithfulness compared to a strong RAG baseline.
 
----
-
-## Dataset & Resources
+### Dataset & Resources
 
 - **unarXive 2024**: Full-text arXiv papers with structured metadata, section segmentation, and citation annotations. [Hugging Face Dataset](https://huggingface.co/datasets/ines-besrour/unarxive_2024)
 - **QA Triplet Benchmark**: 1,000 synthetic question–answer–evidence triplets for reproducible evaluation.
----
 
-## Conclusion
-
-SQuAI demonstrates how collaborative agents, hybrid retrieval, and verifiable citation generation can significantly enhance trust and accuracy in scientific question answering. Its architecture is modular, transparent, and scalable—making it suitable for both research and real-world applications across disciplines.
-
----
 
 
