@@ -4,6 +4,47 @@ SQuAI is a scalable and trustworthy **multi-agent Retrieval-Augmented Generation
 
 Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.be)
 
+### Requirements
+- Python 3.8+
+- PyTorch 2.0.0+
+- CUDA-compatible GPU 
+
+### Installation
+1. Clone the repository:
+```bash
+git clone git@github.com:faerber-lab/SQuAI.git
+cd SQuAI
+```
+3. Create and activate a virtual environment:
+```python
+python -m venv env
+source env/bin/activate  # On Windows, use: env\Scripts\activate
+```
+3. Install dependencies:
+```python
+pip install -r requirements.txt
+```
+
+### Running SQuAI
+SQuAI can be run on a single question or a batch of questions from a JSON/JSONL file.
+#### Process a Single Question
+```bash
+python run_SQuAI.py --model tiiuae/Falcon3-10B-Instruct --n 0.5 --alpha 0.65 --top_k 20 --single_question "Your question here?"
+```
+#### Process Questions from a Dataset
+```bash
+python run_SQuAI.py --model tiiuae/Falcon3-10B-Instruct --n 0.5 --alpha 0.65 --top_k 20 --data_file your_questions.jsonl --output_format jsonl
+```
+#### Parameters
+- `--model`: Model name or path (default: "tiiuae/falcon-3-10b-instruct")
+- `--n`: Adjustment factor for adaptive judge bar (default: 0.5)
+- `--alpha`: Weight for semantic search vs. keyword search (0-1, default: 0.65)
+- `--top_k`: Number of documents to retrieve (default: 20)
+- `--data_file`: File containing questions in JSON or JSONL format
+- `--single_question`: Process a single question instead of a dataset
+- `--output_format`: Output format - json, jsonl, or debug (default: jsonl)
+- `--output_dir`: Directory to save results (default: "results")
+
 ### Key Features
 
 - **Multi-agent architecture** for decomposing and answering complex questions
