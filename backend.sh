@@ -15,7 +15,7 @@ VENV_ACTIVATE=$VENV_DIR/bin/activate
 SCRIPT_DIR=$(dirname $(realpath "$0"))
 
 if [[ ! -z $SLURM_JOB_ID ]]; then
-	SCRIPT_DIR=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}')
+	SCRIPT_DIR=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}' | sed -e 's#backend.sh##')
 
 	module load release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
 fi
