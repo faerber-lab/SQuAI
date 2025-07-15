@@ -1,10 +1,12 @@
+import os
+import socket
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 import plyvel
 from run_SQuAI import Enhanced4AgentRAG, initialize_retriever
 from config import DB_PATH, BM25_INDEX_DIR, E5_INDEX_DIR
 from typing import Optional, List
-import os
 
 app = FastAPI()
 
