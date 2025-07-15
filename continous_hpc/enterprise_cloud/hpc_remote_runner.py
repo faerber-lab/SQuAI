@@ -516,9 +516,6 @@ def start_port_forward(cfg, remote_host: str, remote_port: int, local_port: int)
         rule("[bold]Starting Port Forwarding[/bold]")
 
     try:
-        if not cfg.jumphost_url:
-            raise ValueError("Jumphost URL ist nicht gesetzt!")
-
         ssh_cmd_parts = [
             "ssh",
             "-L", f"{local_port}:{remote_host}:{remote_port}",
