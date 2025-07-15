@@ -25,4 +25,5 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--jumphost-username service \
 	--hpc-job-name squai_job \
 	--username $USERNAME \
-	--sbatch_file_name backend.sh
+	--sbatch_file_name backend.sh \
+	--copy
