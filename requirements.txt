@@ -9,7 +9,6 @@ rouge>=1.0.1
 pinecone
 boto3==1.35.88
 opensearch-py==2.8.0
-sentence-transformers
 tqdm
 nltk
 accelerate
