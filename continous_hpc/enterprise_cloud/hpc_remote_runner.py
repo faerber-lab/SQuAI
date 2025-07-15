@@ -195,7 +195,7 @@ async def rsync_scripts(
 ) -> None:
     """Rsync local script directory to remote."""
     if not local_dir.is_dir():
-        console.print(f"[red]❌{local_dir} is not a directory.[/red]")
+        console.print(f"[red]❌ {local_dir} is not a directory.[/red]")
         sys.exit(1)
 
     rule("[bold]Ensuring remote directory exists[/bold]")
@@ -204,22 +204,40 @@ async def rsync_scripts(
     try:
         await ssh_run(cfg, mkdir_cmd)
     except subprocess.CalledProcessError as e:
-        console.print(f"[red]❌Failed to create remote directory:[/red] {e.stderr}")
+        console.print(f"[red]❌ Failed to create remote directory:[/red] {e.stderr}")
         sys.exit(e.returncode)
 
     rule("[bold]Synchronising script directory[/bold]")
+
+    target_user = args.username or getpass.getuser()
+
+    # Prepare SSH command with optional jumphost
+    ssh_cmd = "ssh"
+    if args.jumphost_url:
+        jumphost_user = args.jumphost_username or args.username or getpass.getuser()
+        ssh_cmd += f" -J {jumphost_user}@{args.jumphost_url}"
+
+    # Determine if cfg.target already includes username
+    if "@" in cfg.target:
+        remote_target = cfg.target
+    else:
+        remote_target = f"{target_user}@{cfg.target}"
+
     rsync_cmd = (
         f"rsync -az --delete "
+        f"-e {shlex.quote(ssh_cmd)} "
         f"{shlex.quote(str(local_dir))}/ "
-        f"{cfg.target}:{shlex.quote(str(remote_dir))}/"
+        f"{remote_target}:{shlex.quote(str(remote_dir))}/"
     )
-    # (jumphost w/ rsync: use ProxyJump via SSH config file or rely on our ssh options)
+
+    print(rsync_cmd)  # Optional: remove or use logger in production
+
     cp = run_local(rsync_cmd, debug=cfg.debug)
     if cp.returncode:
-        console.print(f"[red]❌rsync failed:[/red] {cp.stderr}")
+        console.print(f"[red]❌ rsync failed:[/red] {cp.stderr}")
         sys.exit(cp.returncode)
 
-    console.print(f"[green]✓ {local_dir} → {cfg.target}:{remote_dir} updated.[/green]")
+    console.print(f"[green]✓ {local_dir} → {remote_target}:{remote_dir} updated.[/green]")
 
 @beartype
 def to_absolute(path: str | PosixPath)  -> Path:
