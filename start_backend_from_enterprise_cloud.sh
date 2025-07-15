@@ -21,11 +21,12 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--hpc-system-url login1.capella.hpc.tu-dresden.de \
 	--local-hpc-script-dir $(pwd) \
 	--hpc-script-dir /home/$USERNAME/squai \
-	--jumphost-url imageseg.scads.de \
-	--jumphost-username service \
 	--hpc-job-name squai_fastapi_backend \
 	--username $USERNAME \
 	--sbatch_file_name backend.sh \
 	--copy \
 	--local-port 8501 \
 
+
+#--jumphost-url imageseg.scads.de \
+#--jumphost-username service \
