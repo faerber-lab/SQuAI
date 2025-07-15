@@ -20,7 +20,9 @@ if [[ ! -z $SLURM_JOB_ID ]]; then
 fi
 
 if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
-	python3 -mvenv $VENV_ACTIVATE
+	python3 -mvenv $VENV_DIR
+
+	source $VENV_ACTIVATE
 
 	pip install -r $SCRIPT_DIR/requirements.txt
 fi
