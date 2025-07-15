@@ -15,4 +15,13 @@ fi
 
 source $VENV_ACTIVATE
 
+python3 continous_hpc/enterprise_cloud/hpc_remote_runner.py \
+	--hpc-system-url login1.alpha.hpc.tu-dresden.de \
+	--local-hpc-script-dir $(pwd) \
+	--hpc-script-dir /home/h8/s3811141/ \
+	--jumphost-url imageseg.scads.ai \
+	--jumphost-username service \
+	--hpc-job-name squai_job \
+	--username s3811141
+
 streamlit run $SCRIPT_DIR/app.py --server.port 8501 --server.address 0.0.0.0
