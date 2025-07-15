@@ -9,6 +9,10 @@
 #SBATCH --time=8:00:00
 #SBATCH --output=logs/fastapi_%j.log
 
+function nice_echo {
+	echo -e "\e[1;32m-> $1\e[0m"
+}
+
 VENV_DIR=$HOME/.squai_env
 VENV_ACTIVATE=$VENV_DIR/bin/activate
 
@@ -17,18 +21,20 @@ SCRIPT_DIR=$(dirname $(realpath "$0"))
 if [[ ! -z $SLURM_JOB_ID ]]; then
 	SCRIPT_DIR=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}' | sed -e 's#backend.sh##')
 
+	nice_echo "-> Loading modules"
 	module load release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
+	nice_echo "-> Done loading modules"
 fi
 
 if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
-	echo "-> Virtual Environment '$VENV_DIR' not found. Trying to create it..."
+	nice_echo "-> Virtual Environment '$VENV_DIR' not found. Trying to create it..."
 	python3 -mvenv $VENV_DIR
 
 	source $VENV_ACTIVATE
 
-	echo "-> Installing modules from $SCRIPT_DIR/requirements.txt"
+	nice_echo "-> Installing modules from $SCRIPT_DIR/requirements.txt"
 	pip install -r $SCRIPT_DIR/requirements.txt
-	echo "-> Done installing modules"
+	nice_echo "-> Done installing modules"
 fi
 
 source $VENV_ACTIVATE
