@@ -10,7 +10,7 @@ if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
 
 	source $VENV_ACTIVATE
 
-	pip install streamlit psutil beartype rich
+	pip install streamlit
 fi
 
 source $VENV_ACTIVATE
