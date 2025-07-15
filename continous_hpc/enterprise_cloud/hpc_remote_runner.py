@@ -303,7 +303,7 @@ async def ensure_job_running(
 
         console.print("[yellow]Job not running – submitting…[/yellow]")
 
-        sbatch_path = f"{remote_script_dir}/slurm.sbatch"
+        sbatch_path = f"{remote_script_dir}/{args.sbatch_file_name}"
         submit_cmd = f"sbatch {shlex.quote(sbatch_path)}"
         cp = await ssh_run(cfg, submit_cmd, tty=True)
 
@@ -584,6 +584,7 @@ def build_cli() -> argparse.ArgumentParser:
     parser.add_argument("--local-port", type=int, default=8000, help="Local port to expose the remote service")
     parser.add_argument("--heartbeat-time", type=int, default=10, help="Time to re-check if the server is still running properly")
     parser.add_argument("--username", default=getpass.getuser(), help="SSH username for HPC and (by default) also for jumphost")
+    parser.add_argument("--sbatch_file_name", default="slurm.sbatch", help="Name of the file that contains the slurm job")
     parser.add_argument("--jumphost-username", help="SSH username for jumphost (defaults to --username)")
     parser.add_argument("--hpc-job-name", help="Name of the HPC job (defaults to slurm_runner)", default="slurm_runner")
     parser.add_argument("--server-and-port-file", help="Globally available path to a file where the hostname and port for the host should be put on HPC (defaults to ~/hpc_server_host_and_file)", default="~/hpc_server_host_and_file")

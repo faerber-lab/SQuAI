@@ -22,4 +22,5 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--jumphost-url imageseg.scads.ai \
 	--jumphost-username service \
 	--hpc-job-name squai_job \
-	--username s3811141
+	--username s3811141 \
+	--sbatch_file_name backend.sh
