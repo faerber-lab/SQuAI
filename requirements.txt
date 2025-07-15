@@ -16,3 +16,4 @@ plyvel
 farm-haystack
 uvicorn
 streamlit
+fastapi
