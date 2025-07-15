@@ -1,0 +1,4 @@
+beartype
+psutil
+rich
+tenacity
