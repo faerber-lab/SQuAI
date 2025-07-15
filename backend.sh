@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -x
-
 #SBATCH --job-name=fastapi-backend
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -31,6 +29,8 @@ if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
 fi
 
 source $VENV_ACTIVATE
+
+set -x
 
 # Create log directory if it doesn't exist
 mkdir -p $SCRIPT_DIR/logs
