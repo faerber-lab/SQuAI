@@ -22,12 +22,15 @@ class HaystackRetriever:
         index_path = f"{e5_index_directory}/faiss_index"
         config_path = f"{e5_index_directory}/faiss_index.json"
 
+        RED = "\033[91m"
+        RESET = "\033[0m"
+
         if not os.path.exists(index_path):
-            print(f"{index_path} not found. Cannot continue.")
+            print(f"{RED}{index_path} not found. Cannot continue.{RESET}")
             sys.exit(1)
 
         if not os.path.exists(config_path):
-            print(f"{config_path} not found. Cannot continue.")
+            print(f"{RED}{config_path} not found. Cannot continue.{RESET}")
             sys.exit(1)
 
         # Load document store
