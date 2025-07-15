@@ -97,3 +97,4 @@ results/*
 *.txt
 split_questions/
 C_split_questions/questions_split_*.jsonl
+local_db/
