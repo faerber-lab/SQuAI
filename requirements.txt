@@ -14,4 +14,4 @@ tqdm
 nltk
 accelerate
 plyvel
-haystack
+farm-haystack
