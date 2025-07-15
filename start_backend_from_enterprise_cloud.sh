@@ -23,7 +23,7 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--hpc-script-dir /home/$USERNAME/squai \
 	--jumphost-url imageseg.scads.ai \
 	--jumphost-username service \
-	--hpc-job-name squai_job \
+	--hpc-job-name squai_fastapi_backend \
 	--username $USERNAME \
 	--sbatch_file_name backend.sh \
 	--copy \
