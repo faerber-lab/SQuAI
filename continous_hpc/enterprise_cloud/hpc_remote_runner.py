@@ -550,7 +550,7 @@ def start_port_forward(cfg, remote_host: str, remote_port: int, local_port: int)
         time.sleep(1.0)
         if process.poll() is not None:
             err_output = process.stderr.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"SSH-Forwarding failed:\n{err_output}")
+            console.print(f"[red]SSH-Forwarding failed:\n{err_output}. Command: {ssh_cmd_parts}[/red]")
 
         console.log(f"[green]Port forwarding is running: http://localhost:{local_port} -> {remote_host}:{remote_port}[/green]")
         return SSHForwardProcess(process, local_port, remote_host, remote_port)
