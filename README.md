@@ -10,17 +10,26 @@ Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.
 - CUDA-compatible GPU 
 
 ### Installation
-1. Clone the repository:
+
+1. Install libleveldb-dev
+
+```bash
+sudo apt-get install libleveldb-dev
+```
+
+2. Clone the repository:
 ```bash
 git clone git@github.com:faerber-lab/SQuAI.git
 cd SQuAI
 ```
+
 3. Create and activate a virtual environment:
 ```python
 python -m venv env
 source env/bin/activate  # On Windows, use: env\Scripts\activate
 ```
-3. Install dependencies:
+
+4. Install dependencies:
 ```python
 pip install -r requirements.txt
 ```

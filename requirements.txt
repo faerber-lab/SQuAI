@@ -13,3 +13,4 @@ sentence-transformers
 tqdm
 nltk
 accelerate
+plyvel
