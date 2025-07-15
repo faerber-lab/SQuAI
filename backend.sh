@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -x
+
 #SBATCH --job-name=fastapi-backend
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
