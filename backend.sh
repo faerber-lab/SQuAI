@@ -39,12 +39,12 @@ fi
 
 source $VENV_ACTIVATE
 
-set -x
-
 # Create log directory if it doesn't exist
+nice_echo "Trying to create log dir in $SCRIPT_DIR/logs"
 mkdir -p $SCRIPT_DIR/logs
 
-# Launch FastAPI with uvicorn
+nice_echo "Launch FastAPI with uvicorn"
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
 
+nice_echo "Launch main server on port 8501, broadcasting to 0.0.0.0"
 streamlit app.py --server.port 8501 --server.address 0.0.0.0
