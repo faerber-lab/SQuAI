@@ -26,4 +26,6 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--hpc-job-name squai_job \
 	--username $USERNAME \
 	--sbatch_file_name backend.sh \
-	--copy
+	--copy \
+	--local-port 8500 \
+
