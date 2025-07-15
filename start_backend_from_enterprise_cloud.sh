@@ -18,7 +18,7 @@ source $VENV_ACTIVATE
 USERNAME=s3811141
 
 bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
-	--hpc-system-url login1.alpha.hpc.tu-dresden.de \
+	--hpc-system-url login1.capella.hpc.tu-dresden.de \
 	--local-hpc-script-dir $(pwd) \
 	--hpc-script-dir /home/$USERNAME/squai \
 	--jumphost-url imageseg.scads.ai \
