@@ -22,6 +22,9 @@ ragent = None
 @app.on_event("startup")
 def startup_event():
     global db, ragent
+
+    write_host_and_port_file()
+
     db = plyvel.DB(DB_PATH, create_if_missing=False)
 
     retriever = initialize_retriever(
@@ -41,6 +44,16 @@ def startup_event():
         max_workers=6,
     )
 
+def write_host_and_port_file():
+    port = os.getenv("uvicorn_port", "8000")
+    host = socket.gethostname()
+
+    filepath = os.path.expanduser("~/hpc_server_host_and_file")
+    try:
+        with open(filepath, "w") as f:
+            f.write(f"{host}:{port}\n")
+    except OSError as e:
+        print(f"Failed to write {filepath}: {e}")
 
 @app.on_event("shutdown")
 def shutdown_event():
