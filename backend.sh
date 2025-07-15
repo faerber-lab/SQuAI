@@ -42,7 +42,7 @@ source $VENV_ACTIVATE
 nice_echo "cd $SCRIPT_DIR"
 cd $SCRIPT_DIR
 
-nice_echo "Trying to create log dir in logs"
+nice_echo "Creating log dir $SCRIPT_DIR"
 mkdir -p logs
 
 nice_echo "Launch FastAPI with uvicorn"
