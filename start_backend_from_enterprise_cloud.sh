@@ -15,12 +15,14 @@ fi
 
 source $VENV_ACTIVATE
 
+USERNAME=s3811141
+
 bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--hpc-system-url login1.alpha.hpc.tu-dresden.de \
 	--local-hpc-script-dir $(pwd) \
-	--hpc-script-dir /home/h8/s3811141/ \
+	--hpc-script-dir /home/$USERNAME/squai \
 	--jumphost-url imageseg.scads.ai \
 	--jumphost-username service \
 	--hpc-job-name squai_job \
-	--username s3811141 \
+	--username $USERNAME \
 	--sbatch_file_name backend.sh
