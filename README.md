@@ -14,7 +14,7 @@ Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.
 0. Load Module for Swig
 
 ```bash
-ml development/24.04  GCCcore/12.2.0 SWIG/4.1.1
+ml release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
 ```
 
 1. Install libleveldb-dev
