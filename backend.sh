@@ -21,11 +21,14 @@ if [[ ! -z $SLURM_JOB_ID ]]; then
 fi
 
 if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
+	echo "-> Virtual Environment '$VENV_DIR' not found. Trying to create it..."
 	python3 -mvenv $VENV_DIR
 
 	source $VENV_ACTIVATE
 
+	echo "-> Installing modules from $SCRIPT_DIR/requirements.txt"
 	pip install -r $SCRIPT_DIR/requirements.txt
+	echo "-> Done installing modules"
 fi
 
 source $VENV_ACTIVATE
