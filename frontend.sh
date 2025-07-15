@@ -31,6 +31,6 @@ until nc -z localhost 8501; do
 done
 nice_echo "localhost:8501 is reachable!"
 
-nice "Starting streamlit script $SCRIPT_DIR/app.py"
+nice_echo "Starting streamlit script $SCRIPT_DIR/app.py"
 
 streamlit run $SCRIPT_DIR/app.py --server.port 8501 --server.address 0.0.0.0
