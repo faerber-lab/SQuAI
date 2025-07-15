@@ -119,16 +119,16 @@ def build_ssh_cmd(
         "-o", "ConnectTimeout=10",
         "-o", "ControlMaster=auto",
         "-o", "ControlPersist=60",
-        "-o", "ControlPath=~/.ssh/ctl-%r@%h:%p",
+        #"-o", "ControlPath=~/.ssh/ctl-%r@%h:%p",
     ]
     if cfg.jumphost_url:
         options.extend(["-J", cfg.jumphost_url])
-        print(options)
 
     if allocate_tty:
         options.append("-tt")  # force TTY allocation (Slurm sbatch often needs it)
 
     cmd = ["ssh", *options, cfg.target, remote_cmd]
+    #print(" ".join(cmd))
     return " ".join(shlex.quote(a) for a in cmd)
 
 
