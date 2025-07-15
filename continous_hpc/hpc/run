@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# Bootstrap script for the web server described above.
+# Exactly follows all requested steps and conventions.
+#
+# Usage: ./run.sh [any‑arguments‑for‑hpc.py]
+#
+
+set -e                      # stop on first un‑handled error
+
+# ──────────────────────────── Utility colours ───────────────────────────────
+red_text()   { printf "\033[1;31m%s\033[0m\n" "$*";   }   # bright red
+green_text() { printf "\033[1;32m%s\033[0m\n" "$*";   }   # bright green
+# ────────────────────────────────────────────────────────────────────────────
+
+# 1. Current hash of requirements.txt
+REQ_HASH=$(cat requirements.txt | md5sum | sed -e 's#\s.*##')
+
+# 2. Check / create + activate virtual env
+VENV_DIR="$HOME/.hpc_server_env"
+if [[ ! -d "$VENV_DIR" ]]; then
+    echo "Creating venv in $VENV_DIR ..."
+    if ! python3 -m venv "$VENV_DIR"; then
+        red_text "Failed to create virtualenv"; exit 1
+    fi
+else
+    echo "Using existing venv $VENV_DIR"
+fi
+# shellcheck source=/dev/null
+source "$VENV_DIR/bin/activate"
+
+# 3. Install dependencies if the stored hash differs / file missing
+HASH_FILE="$HOME/.hpc_server/hash"
+mkdir -p "$(dirname "$HASH_FILE")"
+
+if [[ ! -f "$HASH_FILE" || $(<"$HASH_FILE") != "$REQ_HASH" ]]; then
+    echo "Installing Python modules …"
+    # Count installable lines (skip comments/empties)
+    MAPFILE=()
+    while IFS= read -r line; do
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        MAPFILE+=("$line")
+    done < requirements.txt
+    total=${#MAPFILE[@]}
+    idx=0
+
+    # Invisible cursor to avoid flicker; will restore later
+    tput civis
+    trap 'tput cnorm' EXIT
+
+    for pkg in "${MAPFILE[@]}"; do
+        idx=$((idx + 1))
+        percent=$(( idx * 100 / total ))
+        # Progress bar line
+        printf "\r[%3d%%] Installing %-30s" "$percent" "$pkg"
+
+        if ! pip install --quiet "$pkg"; then
+            red_text "\nFailed to install $pkg"
+            exit 1
+        fi
+    done
+
+    # 4. Clear progress bar + final notice
+    tput cr; tput el
+    green_text "✓ All dependencies installed."
+    echo "$REQ_HASH" > "$HASH_FILE"
+    tput cnorm
+else
+    echo "Dependencies already up to date."
+fi
+
+# 5. (Transient output already shown inline during loop.)
+
+# 6. Verify python3 still exists (after venv activation)
+if ! command -v python3 >/dev/null; then
+    red_text "python3 not found inside venv"; exit 1
+fi
+
+# 7. Run the server script
+echo "Starting web server …"
+
+get_slurm_script () {
+	if command -v scontrol >/dev/null 2>&1; then
+		local logfile
+		scontrol show job "$1" | awk -F'Command=' '/Command=/{print $2}'
+	else
+		echo "scontrol nicht verfügbar." >&2
+		return 1
+	fi
+}
+
+if [[ -n "$SLURM_JOB_ID" ]]; then
+	script_dir="$(dirname $(get_slurm_script $SLURM_JOB_ID))"
+else
+	script_dir=$(dirname $(realpath "$0"))
+fi
+
+python3 $script_dir/hpc.py "$@"
