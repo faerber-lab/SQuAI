@@ -123,6 +123,7 @@ def build_ssh_cmd(
     ]
     if cfg.jumphost_url:
         options.extend(["-J", cfg.jumphost_url])
+        print(options)
 
     if allocate_tty:
         options.append("-tt")  # force TTY allocation (Slurm sbatch often needs it)
@@ -718,7 +719,11 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
     console.print(f"Starting with [bold]{args.hpc_system_url}[/bold]  (retries={args.retries})")
 
     target_url = f"{args.username}@{args.hpc_system_url}"
-    jumphost_url = f"{args.jumphost_username}@{args.jumphost_url}"
+
+    jumphost_url = None
+
+    if args.jumphost_url:
+        jumphost_url = f"{args.jumphost_username}@{args.jumphost_url}"
 
     # Try primary host
     primary_cfg = SSHConfig(
