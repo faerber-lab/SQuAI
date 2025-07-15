@@ -230,8 +230,6 @@ async def rsync_scripts(
         f"{remote_target}:{shlex.quote(str(remote_dir))}/"
     )
 
-    print(rsync_cmd)  # Optional: remove or use logger in production
-
     cp = run_local(rsync_cmd, debug=cfg.debug)
     if cp.returncode:
         console.print(f"[red]❌ rsync failed:[/red] {cp.stderr}")
