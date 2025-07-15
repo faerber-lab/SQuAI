@@ -11,6 +11,12 @@ Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.
 
 ### Installation
 
+0. Load Module for Swig
+
+```bash
+ml development/24.04  GCCcore/12.2.0 SWIG/4.1.1
+```
+
 1. Install libleveldb-dev
 
 ```bash
