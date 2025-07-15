@@ -27,5 +27,5 @@ bash $SCRIPT_DIR/continous_hpc/enterprise_cloud/run \
 	--username $USERNAME \
 	--sbatch_file_name backend.sh \
 	--copy \
-	--local-port 8501 \
+	--local-port 8500 \
 
