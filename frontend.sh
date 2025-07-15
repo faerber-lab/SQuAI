@@ -75,7 +75,7 @@ fi
 source "$VENV_ACTIVATE"
 
 nice_echo "Starting backend server as a background job"
-bash "$SCRIPT_DIR/start_backend.sh" \
+bash "$SCRIPT_DIR/start_backend_from_enterprise_cloud.sh" \
 	--username "$USERNAME" \
 	--cluster "$CLUSTER" \
 	--hpc-url "$HPC_URL" \
