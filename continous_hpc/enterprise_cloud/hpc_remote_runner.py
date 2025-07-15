@@ -386,7 +386,6 @@ async def wait_for_job_running_or_absent(cfg: "SSHConfig") -> bool | None:
 
     while True:
         status = await job_status_in_squeue(cfg)
-        print(f"wait_for_job_running_or_absent: status = {status}")
         if status is True:
             return True
         if status is None:
