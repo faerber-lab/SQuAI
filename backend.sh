@@ -8,6 +8,7 @@
 #SBATCH --time=8:00:00
 #SBATCH --output=logs/fastapi_%j.log
 
+VENV_DIR=$HOME/.squai_env
 SCRIPT_DIR=$(dirname $(realpath "$0"))
 
 if [[ ! -z $SLURM_JOB_ID ]]; then
@@ -15,7 +16,6 @@ if [[ ! -z $SLURM_JOB_ID ]]; then
 
 	module load release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
 
-	VENV_DIR=$HOME/.squai_env
 	VENV_ACTIVATE=$VENV_DIR/bin/activate
 fi
 
