@@ -6,6 +6,7 @@
 # Usage: ./run.sh [any‑arguments‑for‑hpc.py]
 #
 set -e                      # stop on first un‑handled error
+SCRIPT_DIR=$(dirname $(realpath "$0"))
 
 # ──────────────────────────── Utility colours ───────────────────────────────
 red_text()   { printf "\033[1;31m%s\033[0m\n" "$*";   }   # bright red
@@ -13,7 +14,7 @@ green_text() { printf "\033[1;32m%s\033[0m\n" "$*";   }   # bright green
 # ────────────────────────────────────────────────────────────────────────────
 
 # 1. Current hash of requirements.txt
-REQ_HASH=$(cat requirements.txt | md5sum | sed -e 's#\s.*##')
+REQ_HASH=$(cat $SCRIPT_DIR/requirements.txt | md5sum | sed -e 's#\s.*##')
 
 # 2. Check / create + activate virtual env
 VENV_DIR="$HOME/.hpc_server_enterprise_cloud_env"
@@ -39,7 +40,7 @@ if [[ ! -f "$HASH_FILE" || $(<"$HASH_FILE") != "$REQ_HASH" ]]; then
     while IFS= read -r line; do
         [[ -z "$line" || "$line" =~ ^# ]] && continue
         MAPFILE+=("$line")
-    done < requirements.txt
+    done < $SCRIPT_DIR/requirements.txt
     total=${#MAPFILE[@]}
     idx=0
 
@@ -77,4 +78,4 @@ fi
 
 # 7. Run the server script
 echo "Starting web server …"
-python3 hpc_remote_runner.py "$@"
+python3 $SCRIPT_DIR/hpc_remote_runner.py "$@"
