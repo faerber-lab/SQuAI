@@ -671,6 +671,9 @@ async def run_with_host(cfg: SSHConfig, local_script_dir: Path) -> tuple[bool, O
                                     fwd = start_port_forward(cfg, host, port, args.local_port)
                         else:
                             console.print(f"[red]❌Remote job on was not in squeue anymore (B)[/red]")
+                            ok, fwd = await run_with_host(primary_cfg, args.local_hpc_script_dir)
+
+                            return ok, fwd
                 except Exception as e:
                     console.print(f"[red]❌Remote job on {cfg.target} appears to have stopped: {e}[/red]")
                     try:
