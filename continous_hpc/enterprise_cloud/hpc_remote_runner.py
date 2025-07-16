@@ -734,6 +734,19 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
         username        = args.username,
         jumphost_username = args.jumphost_username
     )
+
+    fallback_cfg = None
+
+    if args.fallback_system_url:
+        fallback_cfg = SSHConfig(
+            target          = target_url,
+            jumphost_url    = jumphost_url,
+            retries         = args.retries,
+            debug           = args.debug,
+            username        = args.username,
+            jumphost_username = args.jumphost_username
+        )
+
     ok, fwd = await run_with_host(primary_cfg, args.local_hpc_script_dir)
     if ok:
         console.print("[bold green]✓  All done – tunnel is up.  Press Ctrl+C to stop.[/bold green]")
@@ -749,14 +762,7 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
         target_url = f"{args.username}@{args.fallback_system_url}"
 
         console.print("[yellow]Trying fallback host…[/yellow]")
-        fallback_cfg = SSHConfig(
-            target          = target_url,
-            jumphost_url    = jumphost_url,
-            retries         = args.retries,
-            debug           = args.debug,
-            username        = args.username,
-            jumphost_username = args.jumphost_username
-        )
+
         ok, fwd = await run_with_host(fallback_cfg, args.local_hpc_script_dir)
         if not ok:
             console.print("[bold red]❌Both hosts failed.  Giving up.[/bold red]")
