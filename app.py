@@ -15,6 +15,20 @@ n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
 top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, step=1)
 alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
 
+def post_with_retry(url, payload, timeout=300, wait_between=5):
+    start_time = time.time()
+    while True:
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()  # raises error on HTTP 4xx/5xx
+            return response
+        except Exception as e:
+            if time.time() - start_time > timeout:
+                print(f"Giving up after {timeout} seconds: {e}")
+                raise from e
+            print(f"Error: {e}, retrying in {wait_between} seconds...")
+            time.sleep(wait_between)
+
 with st.form(key="qa_form"):
     question = st.text_input("🔎 Enter your question:")
     submit = st.form_submit_button("Get Answer")
@@ -30,7 +44,8 @@ if submit and question:
             "top_k": top_k,
             "alpha": alpha,
         }
-        split_response = requests.post(split_url, json=split_payload)
+
+        split_response = post_with_retry(split_url, split_payload)
 
     if split_response.status_code == 200:
         split_data = split_response.json()
