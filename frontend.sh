@@ -90,3 +90,5 @@ nice_echo "localhost:$LOCAL_PORT is reachable!"
 nice_echo "Starting streamlit script $SCRIPT_DIR/app.py"
 
 streamlit run "$SCRIPT_DIR/app.py" --server.port "$LOCAL_PORT" --server.address 0.0.0.0
+
+wait
