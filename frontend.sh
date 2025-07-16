@@ -13,6 +13,7 @@ USERNAME="s3811141"
 CLUSTER="capella"
 HPC_URL=""
 LOCAL_PORT="8501"
+WEBSERVER_PORT="8500"
 
 # Show help
 function show_help {
@@ -23,6 +24,7 @@ function show_help {
     echo "  --cluster CLUSTER             Cluster name (e.g. capella, alpha) (default: $CLUSTER)"
     echo "  --hpc-url URL                 Full HPC login URL (overrides --cluster)"
     echo "  --local-port PORT             Local port for forwarding (default: $LOCAL_PORT)"
+    echo "  --webserver-port PORT         Default port for webserver"
     echo "  --help                        Show this help message and exit"
     exit 0
 }
@@ -40,6 +42,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --hpc-url)
             HPC_URL="$2"
+            shift 2
+            ;;
+        --webserver-port)
+            WEBSERVER_PORT="$2"
             shift 2
             ;;
         --local-port)
@@ -89,6 +95,6 @@ nice_echo "localhost:$LOCAL_PORT is reachable!"
 
 nice_echo "Starting streamlit script $SCRIPT_DIR/app.py"
 
-streamlit run "$SCRIPT_DIR/app.py" --server.port "$LOCAL_PORT" --server.address 0.0.0.0
+streamlit run "$SCRIPT_DIR/app.py" --server.port "$WEBSERVER_PORT" --server.address 0.0.0.0
 
 wait
