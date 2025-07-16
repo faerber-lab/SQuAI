@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import time
 
 st.set_page_config(page_title="Citation QA", layout="wide")
 st.title("SQuAI")
