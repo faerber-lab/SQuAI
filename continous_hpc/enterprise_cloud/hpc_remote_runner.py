@@ -526,8 +526,8 @@ def start_port_forward(cfg, remote_host: str, remote_port: int, local_port: int)
         # Falls ein Jumphost gesetzt ist, nutzen wir ihn über ProxyJump oder ProxyCommand
         if hasattr(cfg, "proxyjump") and cfg.proxyjump:
             ssh_cmd_parts += ["-J", cfg.proxyjump]
-        else:
-            ssh_cmd_parts += ["-o", f"ProxyCommand=ssh -W %h:%p {shlex.quote(cfg.jumphost_url)}"]
+        #else:
+        #    ssh_cmd_parts += ["-o", f"ProxyCommand=ssh -W %h:%p {shlex.quote(cfg.jumphost_url)}"]
 
         if hasattr(cfg, "identity_file") and cfg.identity_file:
             ssh_cmd_parts += ["-i", cfg.identity_file]
