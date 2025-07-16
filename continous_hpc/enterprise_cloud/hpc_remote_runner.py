@@ -394,7 +394,7 @@ async def wait_for_job_running_or_absent(cfg: "SSHConfig") -> bool | None:
         await asyncio.sleep(poll_interval)
 
 @beartype
-async def read_remote_host_port(cfg: SSHConfig, primary_cfg: SSHConfig, fallback_cfg: SSHConfig) -> Optional[tuple[str, int]]:
+async def read_remote_host_port(cfg: SSHConfig, primary_cfg: SSHConfig, fallback_cfg: Optional[SSHConfig]) -> Optional[tuple[str, int]]:
     """
     Poll remote server_and_port_file until it exists and contains "host:port",
     then parse and return it.
@@ -623,7 +623,7 @@ def kill_process(pid: int) -> None:
         console.print(f"[red]❌EUnexpected error while terminating process {pid}: {e}[/red]")
 
 @beartype
-async def run_with_host(cfg: SSHConfig, local_script_dir: Path, primary_cfg: SSHConfig, fallback_cfg: SSHConfig) -> tuple[bool, Optional[SSHForwardProcess]]:
+async def run_with_host(cfg: SSHConfig, local_script_dir: Path, primary_cfg: SSHConfig, fallback_cfg: Optional[SSHConfig]) -> tuple[bool, Optional[SSHForwardProcess]]:
     global host, port
 
     """
@@ -744,7 +744,7 @@ async def main() -> None:
 
 async def connect_and_tunnel(
     primary_cfg: SSHConfig,
-    fallback_cfg: SSHConfig | None,
+    fallback_cfg: Optional[SSHConfig],
     local_hpc_script_dir: str
 ) -> None:
     # Versuch mit Haupt-Host
