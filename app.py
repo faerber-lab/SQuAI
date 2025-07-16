@@ -27,7 +27,7 @@ def post_with_retry(url, payload, timeout=300, wait_between=5):
             if time.time() - start_time > timeout:
                 print(f"Giving up after {timeout} seconds: {e}")
                 raise
-            print(f"Error: {e}, retrying in {wait_between} seconds...")
+            print(f"Error while trying to connect to {url}: {e}, retrying in {wait_between} seconds...")
             time.sleep(wait_between)
 
 with st.form(key="qa_form"):
