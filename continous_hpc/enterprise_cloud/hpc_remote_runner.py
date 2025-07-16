@@ -780,7 +780,6 @@ async def connect_and_tunnel(
         console.print("[red]❌No fallback host defined. Use --fallback-system-url to define a fallback-host[/red]")
         if fwd is not None:
             fwd.stop()
-        sys.exit(1)
 
 if __name__ == "__main__":
     try:
