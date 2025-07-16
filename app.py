@@ -5,6 +5,41 @@ import time
 st.set_page_config(page_title="Citation QA", layout="wide")
 st.title("SQuAI")
 
+st.markdown("""
+<style>
+/* Footer fixieren */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #111;
+    color: #aaa;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.85em;
+    z-index: 100;
+    border-top: 1px solid #444;
+}
+
+.footer a {
+    color: #aaa;
+    text-decoration: none;
+    margin: 0 15px;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+</style>
+
+<div class="footer">
+    <a href="https://scads.ai/imprint/" target="_blank">Impressum</a>
+    <a href="https://scads.ai/privacy/" target="_blank">Datenschutzerklärung</a>
+    <a href="https://scads.ai/accessibility/" target="_blank">Barrierefreiheit</a>
+</div>
+""", unsafe_allow_html=True)
+
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
