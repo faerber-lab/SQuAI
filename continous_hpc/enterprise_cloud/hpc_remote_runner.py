@@ -725,7 +725,6 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
     if args.jumphost_url:
         jumphost_url = f"{args.jumphost_username}@{args.jumphost_url}"
 
-    # Try primary host
     primary_cfg = SSHConfig(
         target          = target_url,
         jumphost_url    = jumphost_url,
