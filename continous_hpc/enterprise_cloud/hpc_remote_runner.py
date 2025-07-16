@@ -695,7 +695,7 @@ async def run_with_host(cfg: SSHConfig, local_script_dir: Path) -> tuple[bool, O
         console.print(f"[red]❌Host {cfg.target} failed: {exc}[/red]")
         return False, None
 
-async def main() -> None:  # noqa: C901 – a bit long but readable
+async def main() -> None:
     global args
     parser = build_cli()
     args = parser.parse_args()
@@ -708,45 +708,46 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
 
     rule(f"Checking if port is already in use")
 
-    # --- Port already in use? ---
     existing_proc_info = find_process_using_port(args.local_port)
     if existing_proc_info:
         pid, name = existing_proc_info
         console.print(f"[red]❌Local port {args.local_port} already used by PID {pid} ({name})[/red]")
-
         sys.exit(2)
 
     console.print(f"Starting with [bold]{args.hpc_system_url}[/bold]  (retries={args.retries})")
 
     target_url = f"{args.username}@{args.hpc_system_url}"
-
-    jumphost_url = None
-
-    if args.jumphost_url:
-        jumphost_url = f"{args.jumphost_username}@{args.jumphost_url}"
+    jumphost_url = f"{args.jumphost_username}@{args.jumphost_url}" if args.jumphost_url else None
 
     primary_cfg = SSHConfig(
-        target          = target_url,
-        jumphost_url    = jumphost_url,
-        retries         = args.retries,
-        debug           = args.debug,
-        username        = args.username,
-        jumphost_username = args.jumphost_username
+        target=target_url,
+        jumphost_url=jumphost_url,
+        retries=args.retries,
+        debug=args.debug,
+        username=args.username,
+        jumphost_username=args.jumphost_username,
     )
 
     fallback_cfg = None
-
     if args.fallback_system_url:
         fallback_cfg = SSHConfig(
-            target          = target_url,
-            jumphost_url    = jumphost_url,
-            retries         = args.retries,
-            debug           = args.debug,
-            username        = args.username,
-            jumphost_username = args.jumphost_username
+            target=f"{args.username}@{args.fallback_system_url}",
+            jumphost_url=jumphost_url,
+            retries=args.retries,
+            debug=args.debug,
+            username=args.username,
+            jumphost_username=args.jumphost_username,
         )
 
-    ok, fwd = await run_with_host(primary_cfg, args.local_hpc_script_dir)
+    await connect_and_tunnel(primary_cfg, fallback_cfg, args.local_hpc_script_dir)
+
+async def connect_and_tunnel(
+    primary_cfg: SSHConfig,
+    fallback_cfg: SSHConfig | None,
+    local_hpc_script_dir: str
+) -> None:
+    # Versuch mit Haupt-Host
+    ok, fwd = await run_with_host(primary_cfg, local_hpc_script_dir)
     if ok:
         console.print("[bold green]✓  All done – tunnel is up.  Press Ctrl+C to stop.[/bold green]")
         try:
@@ -757,12 +758,10 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
             fwd.stop()
             return
 
-    if args.fallback_system_url:
-        target_url = f"{args.username}@{args.fallback_system_url}"
-
+    # Falls Haupt-Host fehlschlägt und Fallback definiert
+    if fallback_cfg is not None:
         console.print("[yellow]Trying fallback host…[/yellow]")
-
-        ok, fwd = await run_with_host(fallback_cfg, args.local_hpc_script_dir)
+        ok, fwd = await run_with_host(fallback_cfg, local_hpc_script_dir)
         if ok:
             console.print("[bold green]✓  All done – tunnel is up (fallback).  Press Ctrl+C to stop.[/bold green]")
             try:
@@ -776,20 +775,11 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
             console.print("[bold red]❌Both hosts failed.  Giving up.[/bold red]")
             sys.exit(1)
 
-        console.print("[bold green]✓  Tunnel to fallback host established.  Press Ctrl+C to stop.[/bold green]")
     else:
         console.print("[red]❌No fallback host defined. Use --fallback-system-url to define a fallback-host[/red]")
-
         if fwd is not None:
             fwd.stop()
         sys.exit(1)
-    try:
-        while True:
-            await asyncio.sleep(10)
-    except KeyboardInterrupt:
-        console.print("\n[cyan]Stopping tunnel…[/cyan]")
-        fwd.stop()
-
 
 if __name__ == "__main__":
     try:
