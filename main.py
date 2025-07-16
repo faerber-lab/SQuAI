@@ -28,24 +28,28 @@ def startup_event():
 
     write_host_and_port_file()
 
-    db = plyvel.DB(DB_PATH, create_if_missing=False)
+    try:
+        db = plyvel.DB(DB_PATH, create_if_missing=False)
 
-    retriever = initialize_retriever(
-        retriever_type=DEFAULT_RETRIEVER,
-        e5_index_dir=E5_INDEX_DIR,
-        bm25_index_dir=BM25_INDEX_DIR,
-        db_path=DB_PATH,
-        top_k=DEFAULT_TOP_K,
-        alpha=DEFAULT_ALPHA,
-    )
+        retriever = initialize_retriever(
+            retriever_type=DEFAULT_RETRIEVER,
+            e5_index_dir=E5_INDEX_DIR,
+            bm25_index_dir=BM25_INDEX_DIR,
+            db_path=DB_PATH,
+            top_k=DEFAULT_TOP_K,
+            alpha=DEFAULT_ALPHA,
+        )
 
-    ragent = Enhanced4AgentRAG(
-        retriever=retriever,
-        agent_model=DEFAULT_MODEL,
-        n=DEFAULT_N_VALUE,
-        index_dir=BM25_INDEX_DIR,  # Change if needed
-        max_workers=6,
-    )
+        ragent = Enhanced4AgentRAG(
+            retriever=retriever,
+            agent_model=DEFAULT_MODEL,
+            n=DEFAULT_N_VALUE,
+            index_dir=BM25_INDEX_DIR,  # Change if needed
+            max_workers=6,
+        )
+    except plyvel._plyvel.IOError as e:
+        print(f"Error: {e}. Cannot continue.")
+        sys.exit(1)
 
 def write_host_and_port_file():
     port = os.getenv("uvicorn_port", "8000")
