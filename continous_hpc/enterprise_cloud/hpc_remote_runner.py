@@ -751,7 +751,7 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
     if ok:
         console.print("[bold green]✓  All done – tunnel is up.  Press Ctrl+C to stop.[/bold green]")
         try:
-            while True:  # Keep process alive
+            while True:
                 await asyncio.sleep(10)
         except KeyboardInterrupt:
             console.print("\n[cyan]Stopping tunnel…[/cyan]")
@@ -764,7 +764,16 @@ async def main() -> None:  # noqa: C901 – a bit long but readable
         console.print("[yellow]Trying fallback host…[/yellow]")
 
         ok, fwd = await run_with_host(fallback_cfg, args.local_hpc_script_dir)
-        if not ok:
+        if ok:
+            console.print("[bold green]✓  All done – tunnel is up (fallback).  Press Ctrl+C to stop.[/bold green]")
+            try:
+                while True:
+                    await asyncio.sleep(10)
+            except KeyboardInterrupt:
+                console.print("\n[cyan]Stopping tunnel…[/cyan]")
+                fwd.stop()
+                return
+        else:
             console.print("[bold red]❌Both hosts failed.  Giving up.[/bold red]")
             sys.exit(1)
 
