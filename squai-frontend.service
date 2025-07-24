@@ -1,0 +1,16 @@
+[Unit]
+Description=SquAI Frontend Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/service/squai/frontend.sh
+WorkingDirectory=/home/service/squai
+Restart=always
+RestartSec=5
+User=service
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+
