@@ -20,9 +20,11 @@ from llama_index.retrievers.bm25 import BM25Retriever
 import Stemmer
 from llama_index.core.storage.docstore import SimpleDocumentStore
 
+MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+
 # ─── USER CONFIG ───────────────────────────────────────────────────────────────
-DATA_DIR = "/data/horse/ws/inbe405h-unarxive/test"  # JSONL root directory
-PERSIST_DIR = "/data/horse/ws/inbe405h-unarxive/bm25_retriever"  # where the BM25 index will be saved
+DATA_DIR = f"{MAIN_DATA_DIR}/test"  # JSONL root directory
+PERSIST_DIR = f"{MAIN_DATA_DIR}/bm25_retriever"  # where the BM25 index will be saved
 DOCSTORE_PATH = os.path.join(PERSIST_DIR, "docstore.json")
 TOP_K = 5  # how many docs to return per query
 # ────────────────────────────────────────────────────────────────────────────────

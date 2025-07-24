@@ -17,6 +17,7 @@ import re
 import random
 import string
 
+MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
 
 # Generate a unique ID for log filename
 def get_unique_log_filename():
@@ -464,19 +465,19 @@ def main():
     parser.add_argument(
         "--e5_index_dir",
         type=str,
-        default="/data/horse/ws/inbe405h-unarxive/faiss_index",
+        default=f"{MAIN_DATA_DIR}/faiss_index",
         help="Directory containing FAISS E5 index",
     )
     parser.add_argument(
         "--bm25_index_dir",
         type=str,
-        default="/data/horse/ws/inbe405h-unarxive/bm25_retriever",
+        default=f"{MAIN_DATA_DIR}/bm25_retriever",
         help="Directory containing BM25 index",
     )
     parser.add_argument(
         "--index_dir",
         type=str,
-        default="/data/horse/ws/inbe405h-unarxive/test_index",
+        default=f"{MAIN_DATA_DIR}/test_index",
         help="Main index directory (for compatibility)",
     )
     parser.add_argument(

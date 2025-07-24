@@ -2,6 +2,9 @@
 """
 Fast LlamaIndex BM25 Retriever - Keeps index loaded in memory
 """
+
+MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+
 import json
 import logging
 import time
@@ -271,7 +274,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python fast_llamaindex_retriever.py <bm25_index_dir> [query]")
         print(
-            "Example: python fast_llamaindex_retriever.py /data/horse/ws/inbe405h-unarxive/bm25_retriever"
+            f"Example: python fast_llamaindex_retriever.py {MAIN_DATA_DIR}/bm25_retriever"
         )
         sys.exit(1)
 

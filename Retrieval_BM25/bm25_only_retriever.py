@@ -12,6 +12,8 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
+MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+
 try:
     from fast_llamaindex_retriever import FastLlamaIndexBM25Retriever
 
@@ -285,7 +287,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python bm25_only_retriever.py <bm25_index_dir> [query]")
         print(
-            "Example: python bm25_only_retriever.py /data/horse/ws/inbe405h-unarxive/bm25_retriever"
+            f"Example: python bm25_only_retriever.py {MAIN_DATA_DIR}/bm25_retriever"
         )
         sys.exit(1)
 
