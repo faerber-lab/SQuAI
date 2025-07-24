@@ -1,6 +1,6 @@
 import torch
 
-MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+MAIN_DATA_DIR = open("/etc/data_dir").read().strip() if (lambda f: f and f.strip())(open("/etc/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 MODEL_FORMAT = "sentence_transformers"

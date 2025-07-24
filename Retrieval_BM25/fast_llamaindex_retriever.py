@@ -3,7 +3,7 @@
 Fast LlamaIndex BM25 Retriever - Keeps index loaded in memory
 """
 
-MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+MAIN_DATA_DIR = open("/etc/data_dir").read().strip() if (lambda f: f and f.strip())(open("/etc/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
 
 import json
 import logging

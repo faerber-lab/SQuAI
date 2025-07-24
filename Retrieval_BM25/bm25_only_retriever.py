@@ -12,7 +12,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
-MAIN_DATA_DIR = "/data/horse/ws/inbe405h-unarxive"
+MAIN_DATA_DIR = open("/etc/data_dir").read().strip() if (lambda f: f and f.strip())(open("/etc/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
 
 try:
     from fast_llamaindex_retriever import FastLlamaIndexBM25Retriever
