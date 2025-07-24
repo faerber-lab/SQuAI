@@ -17,7 +17,7 @@ import re
 import random
 import string
 
-MAIN_DATA_DIR = open("/etc/data_dir").read().strip() if (lambda f: f and f.strip())(open("/etc/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
+MAIN_DATA_DIR = open(f"{os.getenv('HOME')}/data_dir").read().strip() if (lambda f: f and f.strip())(open(f"{os.getenv('HOME')}/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
 
 # Generate a unique ID for log filename
 def get_unique_log_filename():

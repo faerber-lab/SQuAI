@@ -20,7 +20,7 @@ from llama_index.retrievers.bm25 import BM25Retriever
 import Stemmer
 from llama_index.core.storage.docstore import SimpleDocumentStore
 
-MAIN_DATA_DIR = open("/etc/data_dir").read().strip() if (lambda f: f and f.strip())(open("/etc/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
+MAIN_DATA_DIR = open(f"{os.getenv('HOME')}/data_dir").read().strip() if (lambda f: f and f.strip())(open(f"{os.getenv('HOME')}/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
 
 # ─── USER CONFIG ───────────────────────────────────────────────────────────────
 DATA_DIR = f"{MAIN_DATA_DIR}/test"  # JSONL root directory
