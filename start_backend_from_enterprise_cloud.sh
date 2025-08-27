@@ -5,7 +5,7 @@ VENV_DIR=$HOME/.squai_env_frontend
 VENV_ACTIVATE=$VENV_DIR/bin/activate
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-USERNAME="s3811141"
+USERNAME="squai-demo"
 CLUSTER="capella"
 HPC_URL=""
 LOCAL_PORT="8000"
