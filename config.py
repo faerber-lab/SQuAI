@@ -1,3 +1,4 @@
+import os
 import torch
 
 MAIN_DATA_DIR = open(f"{os.getenv('HOME')}/data_dir").read().strip() if (lambda f: f and f.strip())(open(f"{os.getenv('HOME')}/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
