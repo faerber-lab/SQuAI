@@ -6,6 +6,7 @@ VENV_ACTIVATE=$VENV_DIR/bin/activate
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 USERNAME="squai-demo"
+USERNAME="s3811141"
 CLUSTER="capella"
 HPC_URL=""
 LOCAL_PORT="8000"
