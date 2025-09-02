@@ -8,6 +8,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 import os
+import get_paths
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class Retriever:
 
         # Initialize BM25 if needed
         if strategy in ["hybrid", "bm25"]:
-            self.bm25_python = "bm25_env/bin/python"
+            self.bm25_python = get_paths.get_bm25_python_path()
             self.bm25_script = "bm25_worker.py"
             self.bm25_index_directory = bm25_index_directory
             self._bm25_retriever = None

@@ -12,6 +12,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 
+import get_paths
 from get_paths import get_main_data_dir
 
 MAIN_DATA_DIR = get_main_data_dir()
@@ -68,7 +69,7 @@ class BM25OnlyRetriever:
         """Initialize subprocess fallback"""
         self._fast_bm25 = None
         self._use_fast_bm25 = False
-        self.bm25_python = "bm25_env/bin/python"
+        self.bm25_python = get_paths.get_bm25_python_path()
         self.bm25_script = "bm25_worker.py"
 
     def retrieve_abstracts(

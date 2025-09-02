@@ -37,3 +37,5 @@ def get_main_data_dir():
 
     return resolved_path
 
+def get_bm25_python_path():
+    return "/home/inbe405h/bm25_env/bin/python"
