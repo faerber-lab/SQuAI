@@ -1,3 +1,7 @@
+import sys
+import os
+import socket
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 import plyvel
@@ -22,25 +26,42 @@ ragent = None
 @app.on_event("startup")
 def startup_event():
     global db, ragent
-    db = plyvel.DB(DB_PATH, create_if_missing=False)
 
-    retriever = initialize_retriever(
-        retriever_type=DEFAULT_RETRIEVER,
-        e5_index_dir=E5_INDEX_DIR,
-        bm25_index_dir=BM25_INDEX_DIR,
-        db_path=DB_PATH,
-        top_k=DEFAULT_TOP_K,
-        alpha=DEFAULT_ALPHA,
-    )
+    write_host_and_port_file()
 
-    ragent = Enhanced4AgentRAG(
-        retriever=retriever,
-        agent_model=DEFAULT_MODEL,
-        n=DEFAULT_N_VALUE,
-        index_dir=BM25_INDEX_DIR,  # Change if needed
-        max_workers=6,
-    )
+    try:
+        db = plyvel.DB(DB_PATH, create_if_missing=False)
 
+        retriever = initialize_retriever(
+            retriever_type=DEFAULT_RETRIEVER,
+            e5_index_dir=E5_INDEX_DIR,
+            bm25_index_dir=BM25_INDEX_DIR,
+            db_path=DB_PATH,
+            top_k=DEFAULT_TOP_K,
+            alpha=DEFAULT_ALPHA,
+        )
+
+        ragent = Enhanced4AgentRAG(
+            retriever=retriever,
+            agent_model=DEFAULT_MODEL,
+            n=DEFAULT_N_VALUE,
+            index_dir=BM25_INDEX_DIR,  # Change if needed
+            max_workers=6,
+        )
+    except plyvel._plyvel.IOError as e:
+        print(f"Error: {e}. Cannot continue.")
+        sys.exit(1)
+
+def write_host_and_port_file():
+    port = os.getenv("uvicorn_port", "8000")
+    host = socket.gethostname()
+
+    filepath = os.path.expanduser("~/hpc_server_host_and_file")
+    try:
+        with open(filepath, "w") as f:
+            f.write(f"{host}:{port}\n")
+    except OSError as e:
+        print(f"Failed to write {filepath}: {e}")
 
 @app.on_event("shutdown")
 def shutdown_event():

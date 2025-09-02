@@ -1,3 +1,6 @@
+import os
+import sys
+
 from haystack.document_stores import FAISSDocumentStore
 from haystack.nodes import EmbeddingRetriever
 from haystack import Document
@@ -16,10 +19,24 @@ class HaystackRetriever:
     def __init__(self, e5_index_directory: str):
         logger.info(f"Loading Haystack retriever from {e5_index_directory}")
 
+        index_path = f"{e5_index_directory}/faiss_index"
+        config_path = f"{e5_index_directory}/faiss_index.json"
+
+        RED = "\033[91m"
+        RESET = "\033[0m"
+
+        if not os.path.exists(index_path):
+            print(f"{RED}{index_path} not found. Cannot continue.{RESET}")
+            sys.exit(1)
+
+        if not os.path.exists(config_path):
+            print(f"{RED}{config_path} not found. Cannot continue.{RESET}")
+            sys.exit(1)
+
         # Load document store
         self.document_store = FAISSDocumentStore.load(
-            index_path=f"{e5_index_directory}/faiss_index",
-            config_path=f"{e5_index_directory}/faiss_index.json",
+            index_path=index_path,
+            config_path=config_path,
         )
 
         # Initialize retriever - this loads the model

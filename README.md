@@ -10,17 +10,32 @@ Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.
 - CUDA-compatible GPU 
 
 ### Installation
-1. Clone the repository:
+
+0. Load Module for Swig
+
+```bash
+ml release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
+```
+
+1. Install libleveldb-dev
+
+```bash
+sudo apt-get install libleveldb-dev
+```
+
+2. Clone the repository:
 ```bash
 git clone git@github.com:faerber-lab/SQuAI.git
 cd SQuAI
 ```
+
 3. Create and activate a virtual environment:
 ```python
 python -m venv env
 source env/bin/activate  # On Windows, use: env\Scripts\activate
 ```
-3. Install dependencies:
+
+4. Install dependencies:
 ```python
 pip install -r requirements.txt
 ```
@@ -108,4 +123,6 @@ SQuAI improves combined scores by up to **12%** in faithfulness compared to a st
 - **QA Triplet Benchmark**: 1,000 synthetic question–answer–evidence triplets for reproducible evaluation.
 
 
+### `$HOME/data_dir`
 
+For the case that you want to change where the FAISS data is stored, create a file in `$HOME/data_dir`, in which a path to your workspace is. If no such file is defined or it is empty, `/data/horse/ws/inbe405h-unarxive` will be used by default.

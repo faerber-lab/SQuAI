@@ -1,0 +1,71 @@
+@startuml slurm_service_workflow
+
+title Persistent Web Service Deployment via SLURM and SSH Tunneling
+
+skinparam participantPadding 20
+skinparam sequenceArrowThickness 1.5
+skinparam participant {
+  BackgroundColor #fdfdfd
+  BorderColor black
+  FontColor black
+}
+skinparam note {
+  BackgroundColor #fffbe6
+  BorderColor #aaaaaa
+  FontColor black
+}
+
+participant "Local Machine\n(e.g., Enterprise Cloud)" as Local
+participant "SSH Jumphost\n(optional)" as Jumphost
+participant "HPC Headnode\n(e.g., login1.cluster.com)" as Headnode
+participant "SLURM Job\n(Compute Node)" as Slurm
+
+== Step 1: Initial Setup ==
+
+Local -> Local : run deployment script\n(e.g. --copy --username ...)
+alt --copy is used
+  Local -> Headnode : rsync hpc/ → HPC directory
+end
+
+== Step 2: Establish Connection ==
+
+alt Jumphost is used
+  Local -> Jumphost : SSH connection
+  Jumphost -> Headnode : connect via ProxyCommand
+else
+  Local -> Headnode : direct SSH connection
+end
+
+== Step 3: Launch Service via SLURM ==
+
+Headnode -> Slurm : sbatch slurm.sbatch\n(submit job to start web service)
+
+== Step 4: SLURM Node Starts Web Service ==
+
+Slurm -> Slurm : run hpc.py (web server)
+Slurm -> Slurm : write server host:port to file
+
+note right of Slurm
+  The compute node writes the running web server hostname/port to a known file
+end note
+
+== Step 5: Monitor Job and Check Status ==
+
+loop every HEARTBEAT_TIME
+  Local -> Headnode : squeue --name=<job_name>
+  alt job is running
+    Local -> Headnode : read server-and-port file
+    Headnode -> Local : return host and port
+  else job is gone or failed
+    Local -> Headnode : sbatch --dependency=afterany:<last_job_id>
+  end
+end
+
+== Step 6: SSH Tunnel to Service ==
+
+Local -> Headnode : ssh -L <local_port>:<host>:<remote_port>
+note right of Local
+  Web service is now accessible at http://localhost:<local_port>
+end note
+
+@enduml

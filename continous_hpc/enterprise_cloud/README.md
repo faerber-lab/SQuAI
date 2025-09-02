@@ -1,0 +1,1 @@
+bash run --hpc-system-url login1.alpha.hpc.tu-dresden.de --jumphost-url imageseg.scads.ai --local-hpc-script-dir ../hpc --username s3811141 --jumphost-username service --debug --copy --hpc-script-dir "/home/s3811141/hpc_scripts"
