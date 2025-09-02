@@ -1,6 +1,8 @@
 import torch
 
-MAIN_DATA_DIR = open(f"{os.getenv('HOME')}/data_dir").read().strip() if (lambda f: f and f.strip())(open(f"{os.getenv('HOME')}/data_dir").read()) else "/data/horse/ws/inbe405h-unarxive"
+from get_paths import get_main_data_dir
+
+MAIN_DATA_DIR = get_main_data_dir()
 
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 MODEL_FORMAT = "sentence_transformers"
