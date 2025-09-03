@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import time
 
-st.set_page_config(page_title="Citation QA", layout="wide")
+st.set_page_config(page_title="SQuAI", layout="wide")
 st.title("SQuAI")
 
 st.markdown("""
@@ -43,8 +43,8 @@ st.markdown("""
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-model_choice = st.sidebar.selectbox("Model", ["falcon-3b-10b", "Llama 3.2"], index=0)
-retrieval_choice = st.sidebar.selectbox("Retrieval Method", ["bm25", "e5", "hybrid"], index=0)
+model_choice = st.sidebar.selectbox("Language Model", ["falcon-3b-10b", "Llama 3.2"], index=0)
+retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["bm25", "e5", "hybrid"], index=0)
 
 # Add numeric parameter inputs with defaults
 n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
@@ -67,10 +67,10 @@ def post_with_retry(url, payload, timeout=300, wait_between=5):
 
 with st.form(key="qa_form"):
     question = st.text_input("🔎 Enter your question:")
-    submit = st.form_submit_button("Get Answer")
+    submit = st.form_submit_button("Generate Answer")
 
 if submit and question:
-    with st.spinner("Analyzing your question..."):
+    with st.spinner("Analyzing Question..."):
         split_url = "http://localhost:8000/split"
         split_payload = {
             "question": question,
@@ -123,7 +123,7 @@ if submit and question:
         )
 
         # Then run full query with the split info
-        with st.spinner("Retrieving answer..."):
+        with st.spinner("Retrieving Evidence..."):
             ask_url = "http://localhost:8000/ask"
             ask_payload = {
                 "question": question,
@@ -161,20 +161,20 @@ if submit and question:
                 st.markdown(f"{passage}")
                 st.markdown("---")
 
-            with st.expander("Execution Info"):
-                st.markdown("#### Query Info")
-                st.write(f"- Original query: `{debug_info.get('original_query')}`")
-                st.write(f"- Was split: `{debug_info.get('was_split')}`")
+            with st.expander("Execution Information"):
+                st.markdown("#### Query Information")
+                st.write(f"- Original Question: `{debug_info.get('original_query')}`")
+                st.write(f"- Question Decomposition: `{debug_info.get('was_split')}`")
                 if debug_info.get("sub_questions"):
-                    st.write("**Sub-questions:**")
+                    st.write("**Subquestions:**")
                     for sq in debug_info["sub_questions"]:
                         st.markdown(f"  - {sq}")
 
                 st.markdown("---")
-                st.markdown("#### Document Stats")
-                st.write(f"- Questions processed: `{debug_info.get('questions_processed')}`")
-                st.write(f"- Filtered docs: `{debug_info.get('total_filtered_docs')}`")
-                st.write(f"- Texts retrieved: `{debug_info.get('full_texts_retrieved')}`")
+                st.markdown("#### Evidence Statistic")
+                st.write(f"- Processed Questions: `{debug_info.get('questions_processed')}`")
+                st.write(f"- Retrieved Evidence: `{debug_info.get('full_texts_retrieved')}`")
+                st.write(f"- Filtered Evidence: `{debug_info.get('total_filtered_docs')}`")
                 st.write(f"- Citations: `{debug_info.get('total_citations')}`")
         else:
             st.error(f"❌ Error: {ask_response.status_code} - {ask_response.text}")
