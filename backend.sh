@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=6
 #SBATCH --mem=128G
 #SBATCH --gres=gpu:2
-#SBATCH --time=16:00:00
+#SBATCH --time=32:00:00
 #SBATCH --output=logs/fastapi_%j.log
 
 function nice_echo {
