@@ -13,6 +13,12 @@ function nice_echo {
 	echo -e "\e[1;32m-> $1\e[0m"
 }
 
+if command -v sbatch 2>/dev/null >/dev/null; then
+    nice_echo "Starting the job as a dependency of itself"
+
+    sbatch --dependency=afterany:$SLURM_JOB_ID "$SLURM_SCRIPT" "$@"
+fi
+
 VENV_DIR=$HOME/.squai_env
 VENV_ACTIVATE=$VENV_DIR/bin/activate
 
@@ -50,5 +56,3 @@ uvicorn_port=8000 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
 
 nice_echo "Launch main server on port 8501, broadcasting to 0.0.0.0"
 streamlit run app.py --server.port 8501 --server.address 0.0.0.0
-
-sbatch --dependency=afterany:$SLURM_JOB_ID "$SLURM_SCRIPT" "$@"
