@@ -6,12 +6,29 @@
 #SBATCH --cpus-per-task=6
 #SBATCH --mem=128G
 #SBATCH --gres=gpu:2
-#SBATCH --time=16:00:00
+#SBATCH --time=32:00:00
 #SBATCH --output=logs/fastapi_%j.log
+
+get_slurm_script () {
+	if command -v scontrol >/dev/null 2>&1; then
+		local logfile
+		scontrol show job "$1" | awk -F'Command=' '/Command=/{print $2}'
+	else
+		echo "scontrol nicht verfügbar." >&2
+		return 1
+	fi
+}
 
 function nice_echo {
 	echo -e "\e[1;32m-> $1\e[0m"
 }
+
+if command -v sbatch 2>/dev/null >/dev/null; then
+    nice_echo "Starting the job as a dependency of itself"
+
+	SLURM_SCRIPT="$(get_slurm_script $SLURM_JOB_ID)"
+    sbatch --dependency=afterany:$SLURM_JOB_ID "$SLURM_SCRIPT" "$@"
+fi
 
 VENV_DIR=$HOME/.squai_env
 VENV_ACTIVATE=$VENV_DIR/bin/activate
