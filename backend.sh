@@ -50,3 +50,5 @@ uvicorn_port=8000 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
 
 nice_echo "Launch main server on port 8501, broadcasting to 0.0.0.0"
 streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+
+sbatch --dependency=afterany:$SLURM_JOB_ID "$SLURM_SCRIPT" "$@"
