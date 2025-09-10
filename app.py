@@ -1,6 +1,49 @@
-import streamlit as st
-import requests
-import time
+import sys
+
+try:
+    import streamlit as st
+    import requests
+    import time
+    import os
+    import subprocess
+except ModuleNotFoundError as e:
+    print(f"Module not found: {e}. Did you run this script via frontend.sh?")
+    sys.exit(1)
+
+def get_script_path():
+    try:
+        # sys.argv[0] enthält den Namen des gestarteten Skripts
+        script_path = os.path.abspath(sys.argv[0])
+        return script_path
+    except Exception as e:
+        print("Error detecting the path:", str(e))
+        return None
+
+
+def start_backend():
+    script_dir = get_script_dir()
+    if script_dir is None:
+        return False
+
+    shell_script = os.path.join(script_dir, "start_backend_from_enterprise_cloud.sh")
+
+    if not os.path.isfile(shell_script):
+        print("Fehler: Script nicht gefunden:", shell_script)
+        return False
+
+    try:
+        # Startet das Script im Hintergrund, ohne dass es den Python-Prozess blockiert
+        process = subprocess.Popen(
+            ["bash", shell_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setpgrp   # verhindert Signalweitergabe (Linux/Unix)
+        )
+        print("Backend gestartet. PID:", process.pid)
+        return True
+    except Exception as e:
+        print("Fehler beim Starten des Backends:", str(e))
+        return False
 
 st.set_page_config(page_title="SQuAI", layout="wide")
 st.title("SQuAI")
