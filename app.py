@@ -145,7 +145,7 @@ def wait_for_backend(url, timeout=60, wait_between=2):
 
         time.sleep(wait_between)
 
-def post_with_retry(url, payload, wait_between=5, max_retries=3, max_backend_restarts=3):
+def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_restarts=5):
     backend_restarts = 0
 
     while backend_restarts < max_backend_restarts:
