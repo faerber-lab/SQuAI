@@ -58,8 +58,8 @@ class QuestionSplitter:
     def __init__(self, agent_model):
         self.agent = agent_model
         logger.info("Agent 1 (Question Splitter) initialized")
-    
-    def create_splitting_prompt(self, query: str) -> str:
+
+    def _create_splitting_prompt(self, query: str) -> str:
         """Create prompt for question splitting analysis"""
         return f"""You are an intelligent question analyzer. Your task is to determine if a query contains multiple distinct sub-questions that would benefit from separate retrieval and research.
 
@@ -74,9 +74,25 @@ Query: "What is quantum computing and how is it used in cryptography?"
 Split: YES
 Sub-questions: ["What is quantum computing?", "How is quantum computing used in cryptography?"]
 
+Query: "what is page rank algorithm and who invented it?"
+Split: YES
+Sub-questions: ["What is page rank algorithm?", "Who invented page rank algorithm?"]
+
 Query: "What are the applications and limitations of machine learning?"
 Split: NO (same topic, different aspects)
 Sub-questions: []
+
+Query: "How does BERT work and what is GPT-3?"
+Split: YES  
+Sub-questions: ["How does BERT work?", "What is GPT-3?"]
+
+Query: "What is the difference between supervised and unsupervised learning?"
+Split: NO (comparison of related concepts)
+Sub-questions: []
+
+Query: "What are neural networks and how do they learn and what are CNNs?"
+Split: YES
+Sub-questions: ["What are neural networks?", "How do neural networks learn?", "What are CNNs?"]
 
 Now analyze this query:
 Query: "{query}"
