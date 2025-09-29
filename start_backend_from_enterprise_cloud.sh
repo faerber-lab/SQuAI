@@ -7,7 +7,7 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 USERNAME="squai"
 CLUSTER="capella"
-FALLBACK_CLUSTER="alpha"
+FALLBACK_CLUSTER="capella"
 HPC_URL=""
 LOCAL_PORT="8000"
 
