@@ -192,7 +192,10 @@ if submit and question:
             "alpha": alpha,
         }
 
-        split_response = post_with_retry(split_url, split_payload)
+        try:
+            split_response = post_with_retry(split_url, split_payload)
+        except RuntimeError as e:
+            st.markdown(f"<i>{e}</i>")
 
     if split_response.status_code == 200:
         split_data = split_response.json()
