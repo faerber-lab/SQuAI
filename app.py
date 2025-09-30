@@ -195,8 +195,7 @@ if submit and question:
         try:
             split_response = post_with_retry(split_url, split_payload)
         except RuntimeError as e:
-            st.markdown(f"<i>{e}</i>")
-            st.write(f"Could not get answer. Sorry!")
+            st.markdown(f"{e}")
             return
 
     if split_response.status_code == 200:
