@@ -86,7 +86,7 @@ echo "${CYAN}${BOLD}Available extensions:${RESET} $available_ext"
 echo "${CYAN}${BOLD}Remaining time:${RESET} $days days $hours hours"
 
 # Fall 1: noch genug Zeit → nichts tun
-if [[ $total_hours -ge 72 ]]; then
+if [[ $total_hours -ge 192 ]]; then
     echo "${GREEN}${BOLD}INFO:${RESET} Workspace lifetime is sufficient. No action required."
     exit 0
 fi
