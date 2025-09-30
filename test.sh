@@ -11,6 +11,7 @@ RESET=$(tput sgr0)
 # Parameter
 USERNAME=${1:-squai}
 PARTITION=${2:-capella}
+NUM_DAYS=${3:-100}
 
 echo "${CYAN}${BOLD}Using:${RESET} USER=$USERNAME PARTITION=$PARTITION"
 
@@ -93,13 +94,13 @@ fi
 # Fall 2: Weniger als 3 Tage → prüfen ob extend geht
 if [[ $available_ext -gt 0 ]]; then
     echo "${YELLOW}${BOLD}Extending workspace:${RESET} $current_id"
-    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_extend -F $filesystem $current_id 100"
+    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_extend -F $filesystem $current_id $NUM_DAYS"
 else
     new_index=$((current_index + 1))
     new_id="faiss_$new_index"
 
     echo "${YELLOW}${BOLD}No extensions left. Allocating new workspace:${RESET} $new_id"
-    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_allocate -F $filesystem $new_id 100"
+    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_allocate -F $filesystem $new_id $NUM_DAYS"
 
     ws_list_after=$(ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_list")
     new_path=$(echo "$ws_list_after" | awk "/id: $new_id/{flag=1;print;next}/^id:/{flag=0}flag" | grep "workspace directory" | awk -F: '{print $2}' | xargs)
