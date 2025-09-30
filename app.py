@@ -181,6 +181,8 @@ with st.form(key="qa_form"):
     submit = st.form_submit_button("Generate Answer")
 
 if submit and question:
+    split_response = None
+
     with st.spinner("Analyzing Question..."):
         split_url = "http://localhost:8000/split"
         split_payload = {
@@ -196,9 +198,8 @@ if submit and question:
             split_response = post_with_retry(split_url, split_payload)
         except RuntimeError as e:
             st.markdown(f"{e}")
-            return
 
-    if split_response.status_code == 200:
+    if split_response is not None and split_response.status_code == 200:
         split_data = split_response.json()
         should_split = split_data.get("should_split")
         sub_questions = split_data.get("sub_questions", [])
