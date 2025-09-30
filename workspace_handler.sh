@@ -91,7 +91,7 @@ if [[ $total_hours -ge 192 ]]; then
     exit 0
 fi
 
-# Fall 2: Weniger als 3 Tage → prüfen ob extend geht
+# Fall 2: Weniger als 8 Tage → prüfen ob extend geht
 if [[ $available_ext -gt 0 ]]; then
     echo "${YELLOW}${BOLD}Extending workspace:${RESET} $current_id"
     ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "ws_extend -F $filesystem $current_id $NUM_DAYS"
