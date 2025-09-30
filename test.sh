@@ -111,5 +111,5 @@ else
     fi
 
     echo "${GREEN}${BOLD}Copying data from old to new workspace:${RESET}"
-    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "dtcp -r $current_path $new_path"
+    ssh "$USERNAME@login1.$PARTITION.hpc.tu-dresden.de" "dtcp -r $current_path/* $new_path"
 fi
