@@ -21,6 +21,7 @@ def get_ws_list_paths(min_days=8):
     Ruft ws_list auf und gibt den Pfad des Workspaces mit der höchsten Nummer zurück,
     dessen Restlaufzeit mehr als min_days beträgt.
     """
+    print("Trying to look for workspace...")
     try:
         result = subprocess.run(
             ["ws_list"],
@@ -29,6 +30,8 @@ def get_ws_list_paths(min_days=8):
             check=True
         )
         output = result.stdout
+
+        print(f"ws_list result: {result}")
     except Exception as e:
         sys.stderr.write(f"Fehler beim Ausführen von ws_list: {e}\n")
         return None
@@ -39,10 +42,13 @@ def get_ws_list_paths(min_days=8):
         re.MULTILINE
     )
 
+    print(f"ws_entries: {ws_entries}")
+
     valid_workspaces = []
 
     for ws_name, ws_path, remaining_str in ws_entries:
         remaining = parse_remaining_time(remaining_str)
+        print(f"Workspace: {ws_name} ({ws_path}, remaining: {remaining})")
         if remaining > timedelta(days=min_days):
             # Extrahiere Zahl am Ende des Namens oder 0, wenn faiss
             number_match = re.search(r"faiss(?:_(\d+))?", ws_name)
@@ -50,10 +56,12 @@ def get_ws_list_paths(min_days=8):
             valid_workspaces.append((number, ws_path))
 
     if not valid_workspaces:
+        print("No valid workspace found")
         return None
 
     # Höchste Nummer auswählen
     valid_workspaces.sort(reverse=True, key=lambda x: x[0])
+    print(f"Using found valid workspace: {valid_workspaces[0][1]}")
     return valid_workspaces[0][1]
 
 def get_main_data_dir():
@@ -95,6 +103,7 @@ def get_main_data_dir():
         )
         sys.exit(1)
 
+    print(f"get_main_data_dir: Using resolved path: {resolved_path}")
     return resolved_path
 
 def get_bm25_python_path():
