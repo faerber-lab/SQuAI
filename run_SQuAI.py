@@ -67,6 +67,7 @@ SPLITTING CRITERIA:
 - Split if query contains multiple distinct topics connected by "and", "also", "what about"
 - Split if query asks for comparisons between different concepts
 - Split if query has multiple question words (what, how, why, when, where)
+- Split if query asks about a concept AND its implications/effects/applications
 - DO NOT split simple clarifications or related aspects of the same topic
 
 Examples:
@@ -94,6 +95,10 @@ Query: "What are neural networks and how do they learn and what are CNNs?"
 Split: YES
 Sub-questions: ["What are neural networks?", "How do neural networks learn?", "What are CNNs?"]
 
+Query: "What is federated learning and its privacy implications?"
+Split: YES
+Sub-questions: ["What is federated learning?", "What are the privacy implications of federated learning?"]
+
 Now analyze this query:
 Query: "{query}"
 
@@ -104,77 +109,55 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
     def analyze_and_split(self, query: str) -> Tuple[bool, List[str]]:
         """
         Analyze query and split into sub-questions if beneficial
+        Always uses LLM for accurate analysis
 
         Returns:
             Tuple of (should_split: bool, sub_questions: List[str])
         """
-        # Remove the time_block wrapper that might be causing issues
+        # Handle time_block if it exists (for compatibility)
+        try:
+            # Check if time_block is available
+            if 'time_block' in globals():
+                with time_block("agent1_question_splitting"):
+                    return self._perform_split_analysis(query)
+            else:
+                return self._perform_split_analysis(query)
+        except:
+            # Fallback if time_block causes any issues
+            return self._perform_split_analysis(query)
+
+    def _perform_split_analysis(self, query: str) -> Tuple[bool, List[str]]:
+        """
+        Internal method to perform the actual split analysis using LLM
+        """
         logger.info(f"Agent 1: Analyzing query for splitting: {query}")
         
-        # Record time manually if needed
-        start_time = time.time()
+        # Basic validation - only skip extremely short queries
+        if len(query.strip()) < 10:  # Less than 10 characters is too short
+            logger.info("Query too short for meaningful splitting")
+            return False, []
         
         try:
-            # Simple heuristics first (fast check)
-            if not self._quick_split_check(query):
-                logger.info("Quick check: No splitting needed")
-                return False, []
-
-            # Use LLM for complex analysis
+            # Always use LLM for analysis (no heuristics)
+            logger.info("Using LLM to analyze if query should be split...")
+            
             prompt = self._create_splitting_prompt(query)
             response = self.agent.generate(prompt)
-
+            
             # Parse response
             should_split, sub_questions = self._parse_splitting_response(response, query)
-
+            
             if should_split:
-                logger.info(f"Agent 1: Split into {len(sub_questions)} sub-questions: {sub_questions}")
+                logger.info(f"Agent 1: LLM decided to split into {len(sub_questions)} sub-questions: {sub_questions}")
             else:
-                logger.info("Agent 1: No splitting recommended")
-            
-            # Log timing manually
-            elapsed = time.time() - start_time
-            logger.debug(f"Question splitting took {elapsed:.2f} seconds")
-            
-            # Update monitor if available
-            if hasattr(monitor, 'record_timing'):
-                monitor.record_timing("agent1_question_splitting", elapsed, success=True)
+                logger.info("Agent 1: LLM decided no splitting needed")
             
             return should_split, sub_questions
             
         except Exception as e:
-            logger.error(f"Error in question splitting: {e}")
-            # Log failure if monitor available
-            elapsed = time.time() - start_time
-            if hasattr(monitor, 'record_timing'):
-                monitor.record_timing("agent1_question_splitting", elapsed, success=False)
-            # Return safe defaults on error
+            logger.error(f"Error in LLM splitting analysis: {e}")
+            # On error, don't split
             return False, []
-
-    def _quick_split_check(self, query: str) -> bool:
-        """Fast heuristic check to avoid LLM calls for obvious cases"""
-        query_lower = query.lower()
-
-        # Skip very short queries
-        if len(query.split()) < 6:
-            return False
-
-        # Look for splitting indicators
-        split_indicators = [
-            " and what ", " and how ", " and why ", " and when ", " and who ",
-            " and where ", "what about", "also what", "also how", "also why",
-            "? and ", "? what", "? how", "? why", "? when", "? where"
-        ]
-
-        for indicator in split_indicators:
-            if indicator in query_lower:
-                return True
-
-        # Count question words
-        question_words = ["what", "how", "why", "when", "where", "which", "who"]
-        question_count = sum(1 for word in question_words if word in query_lower)
-
-        return question_count >= 2
 
     def _parse_splitting_response(self, response: str, original_query: str) -> Tuple[bool, List[str]]:
         """Parse the LLM response for splitting decision"""
@@ -208,11 +191,14 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
 
             # Validation: ensure sub-questions are meaningful
             if should_split and sub_questions:
-                # Filter out empty or too similar questions
                 valid_questions = []
                 for q in sub_questions:
                     q = q.strip()
-                    if len(q) > 10 and q.endswith("?"):
+                    # Clean up and validate
+                    if len(q) > 10:
+                        # Add question mark if missing
+                        if not q.endswith("?"):
+                            q = q + "?"
                         valid_questions.append(q)
 
                 if len(valid_questions) < 2:
@@ -226,6 +212,14 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
         except Exception as e:
             logger.warning(f"Error parsing splitting response: {e}")
             return False, []
+
+    def _quick_split_check(self, query: str) -> bool:
+        """
+        DEPRECATED: Keep for backward compatibility but not used
+        This method is kept in case other parts of the code reference it
+        """
+        # Always return False since we're using LLM directly now
+        return False
 
 class PaperTitleExtractor:
     """
