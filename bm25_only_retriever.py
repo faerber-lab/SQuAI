@@ -24,7 +24,7 @@ import numpy as np
 
 # ONLY import LlamaIndex BM25 - no Haystack!
 try:
-    from fast_llamaindex_retriever import FastLlamaIndexBM25Retriever
+    from SQuAI.fast_llamaindex_retriever import FastLlamaIndexBM25Retriever
     FAST_BM25_AVAILABLE = True
     logger = logging.getLogger(__name__)
     logger.info("Fast BM25 available - no Haystack conflicts")
