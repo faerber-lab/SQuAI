@@ -1,15 +1,13 @@
+from haystack import Document
+from haystack_retriever import HaystackRetriever
 import subprocess
 import json
+import shlex
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import numpy as np
 import os
-import pickle
-from pathlib import Path
-import faiss
-from sentence_transformers import SentenceTransformer
-import torch
 import get_paths
 
 logger = logging.getLogger(__name__)
@@ -26,146 +24,11 @@ def normalize(scores):
     return [(s - min_score) / (max_score - min_score) for s in scores]
 
 
-# 直接包含E5DirectRetriever类，不依赖Haystack
-class E5DirectRetriever:
-    """
-    E5检索器 - 直接使用FAISS，无Haystack依赖
-    """
-    
-    def __init__(self, index_directory: str, model_name: str = "intfloat/e5-large-v2"):
-        self.index_dir = Path(index_directory)
-        self.model_name = model_name
-        self.mapping_cache_file = self.index_dir / "faiss_document_mapping.pkl"
-        
-        logger.info(f"初始化E5检索器: {index_directory}")
-        
-        # 加载FAISS索引
-        index_path = self.index_dir / "faiss_index"
-        self.index = faiss.read_index(str(index_path))
-        logger.info(f"FAISS索引加载: {self.index.ntotal:,} 向量")
-        
-        # 加载映射
-        if self.mapping_cache_file.exists():
-            self._load_cached_mapping()
-        else:
-            logger.info("首次运行，构建映射...")
-            self._build_and_save_mapping()
-        
-        # 加载E5模型
-        self.model = SentenceTransformer(self.model_name)
-        if torch.cuda.is_available():
-            self.model = self.model.cuda()
-            logger.info("E5模型在GPU上运行")
-        else:
-            logger.info("E5模型在CPU上运行")
-        self.model.eval()
-        
-        # 缓存
-        self._cache = {}
-        self._cache_size = 100
-    
-    def _load_cached_mapping(self):
-        """加载缓存映射"""
-        with open(self.mapping_cache_file, 'rb') as f:
-            cache_data = pickle.load(f)
-        self.faiss_to_doc = cache_data['faiss_to_doc']
-        self.doc_metadata = cache_data.get('doc_metadata', {})
-        logger.info(f"映射加载完成: {len(self.faiss_to_doc):,} 文档")
-    
-    def _build_and_save_mapping(self):
-        """构建并保存映射"""
-        import sqlite3
-        
-        db_path = self.index_dir / "index_store.db"
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-        
-        # 创建映射
-        self.faiss_to_doc = {}
-        self.doc_metadata = {}
-        
-        cursor.execute("""
-            SELECT id, vector_id, content 
-            FROM document 
-            WHERE vector_id IS NOT NULL
-        """)
-        
-        for doc_id, vector_id_str, content in cursor.fetchall():
-            faiss_idx = int(vector_id_str)
-            self.faiss_to_doc[faiss_idx] = {
-                'id': doc_id,
-                'content': content
-            }
-        
-        # 保存缓存
-        cache_data = {
-            'faiss_to_doc': self.faiss_to_doc,
-            'doc_metadata': self.doc_metadata
-        }
-        
-        with open(self.mapping_cache_file, 'wb') as f:
-            pickle.dump(cache_data, f)
-        
-        conn.close()
-        logger.info(f"映射构建完成并保存")
-    
-    def retrieve(self, query: str, top_k: int = 5):
-        """检索文档 - 兼容Haystack接口"""
-        cache_key = f"{query}_{top_k}"
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-        
-        # E5编码
-        query_text = f"query: {query}"
-        with torch.no_grad():
-            query_embedding = self.model.encode(
-                query_text,
-                convert_to_numpy=True,
-                show_progress_bar=False,
-                normalize_embeddings=True
-            ).reshape(1, -1).astype('float32')
-        
-        # FAISS搜索
-        distances, indices = self.index.search(query_embedding, top_k)
-        
-        # 构建结果（兼容Haystack格式）
-        results = []
-        for dist, faiss_idx in zip(distances[0], indices[0]):
-            if faiss_idx == -1:
-                continue
-            
-            if faiss_idx in self.faiss_to_doc:
-                doc_info = self.faiss_to_doc[faiss_idx]
-                # 创建兼容对象
-                class FakeDoc:
-                    def __init__(self, content, doc_id, score):
-                        self.content = content
-                        self.meta = {"paper_id": doc_id}
-                        self.score = float(score)
-                
-                results.append(FakeDoc(
-                    doc_info['content'],
-                    doc_info['id'],
-                    dist
-                ))
-        
-        self._cache[cache_key] = results
-        return results
-    
-    def retrieve_abstracts(self, query: str, top_k: int = 5):
-        """检索摘要 - 返回(text, doc_id)元组列表"""
-        docs = self.retrieve(query, top_k)
-        return [(doc.content, doc.meta["paper_id"]) for doc in docs]
-    
-    def close(self):
-        """清理资源"""
-        self._cache.clear()
-
 class Retriever:
     """
-    混合检索器 - 完全不依赖Haystack
+    SIMPLE Hybrid retriever with strategy support: E5, BM25, or Hybrid
     """
-    
+
     def __init__(
         self,
         e5_index_directory: str,
@@ -174,20 +37,29 @@ class Retriever:
         strategy: str = "hybrid",
         alpha: float = 0.65,
     ):
+        """
+        Initialize retriever with strategy support
+
+        Args:
+            strategy: "hybrid", "e5", or "bm25"
+            alpha: Weight for E5 in hybrid mode (default 0.65)
+        """
         self.strategy = strategy
         self.alpha = alpha
         self.top_k = top_k
-        
-        logger.info(f"Initializing {strategy.upper()} retriever (Haystack-free)...")
-        
-        # E5 - 使用新实现
+
+        logger.info(f"Initializing {strategy.upper()} retriever...")
+        if strategy == "hybrid":
+            logger.info(f"Hybrid weights: E5={alpha:.2f}, BM25={1-alpha:.2f}")
+
+        # Initialize E5 if needed
         if strategy in ["hybrid", "e5"]:
-            self.e5 = E5DirectRetriever(e5_index_directory)
-            logger.info("E5 initialized (direct FAISS, no Haystack)")
+            self.e5 = HaystackRetriever(e5_index_directory)
+            logger.info("E5 initialized")
         else:
             self.e5 = None
-        
-        # BM25 - 保持不变
+
+        # Initialize BM25 if needed
         if strategy in ["hybrid", "bm25"]:
             self.bm25_python = get_paths.get_bm25_python_path()
             self.bm25_script = "bm25_worker.py"
@@ -197,8 +69,8 @@ class Retriever:
             logger.info("BM25 initialized")
         else:
             self._bm25_retriever = None
-        
-        # 缓存和线程池
+
+        # Caching and threading (always needed)
         self._doc_cache = {}
         self._abstract_cache = {}
         self._fulltext_cache = {}
