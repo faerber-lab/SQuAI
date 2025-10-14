@@ -108,13 +108,9 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
         Returns:
             Tuple of (should_split: bool, sub_questions: List[str])
         """
-        # Remove the time_block wrapper that might be causing issues
-        logger.info(f"Agent 1: Analyzing query for splitting: {query}")
-        
-        # Record time manually if needed
-        start_time = time.time()
-        
-        try:
+        with time_block("agent1_question_splitting"):
+            logger.info(f"Agent 1: Analyzing query for splitting: {query}")
+
             # Simple heuristics first (fast check)
             if not self._quick_split_check(query):
                 logger.info("Quick check: No splitting needed")
@@ -125,31 +121,18 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
             response = self.agent.generate(prompt)
 
             # Parse response
-            should_split, sub_questions = self._parse_splitting_response(response, query)
+            should_split, sub_questions = self._parse_splitting_response(
+                response, query
+            )
 
             if should_split:
-                logger.info(f"Agent 1: Split into {len(sub_questions)} sub-questions: {sub_questions}")
+                logger.info(
+                    f"Agent 1: Split into {len(sub_questions)} sub-questions: {sub_questions}"
+                )
             else:
                 logger.info("Agent 1: No splitting recommended")
-            
-            # Log timing manually
-            elapsed = time.time() - start_time
-            logger.debug(f"Question splitting took {elapsed:.2f} seconds")
-            
-            # Update monitor if available
-            if hasattr(monitor, 'record_timing'):
-                monitor.record_timing("agent1_question_splitting", elapsed, success=True)
-            
+
             return should_split, sub_questions
-            
-        except Exception as e:
-            logger.error(f"Error in question splitting: {e}")
-            # Log failure if monitor available
-            elapsed = time.time() - start_time
-            if hasattr(monitor, 'record_timing'):
-                monitor.record_timing("agent1_question_splitting", elapsed, success=False)
-            # Return safe defaults on error
-            return False, []
 
     def _quick_split_check(self, query: str) -> bool:
         """Fast heuristic check to avoid LLM calls for obvious cases"""
@@ -161,9 +144,22 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
 
         # Look for splitting indicators
         split_indicators = [
-            " and what ", " and how ", " and why ", " and when ", " and who ",
-            " and where ", "what about", "also what", "also how", "also why",
-            "? and ", "? what", "? how", "? why", "? when", "? where"
+            " and what ",
+            " and how ",
+            " and why ",
+            " and when ",
+            " and who ",
+            " and where ",
+            "what about",
+            "also what",
+            "also how",
+            "also why",
+            "? and ",
+            "? what",
+            "? how",
+            "? why",
+            "? when",
+            "? where",
         ]
 
         for indicator in split_indicators:
@@ -176,10 +172,12 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
 
         return question_count >= 2
 
-    def _parse_splitting_response(self, response: str, original_query: str) -> Tuple[bool, List[str]]:
+    def _parse_splitting_response(
+        self, response: str, original_query: str
+    ) -> Tuple[bool, List[str]]:
         """Parse the LLM response for splitting decision"""
         try:
-            lines = response.strip().split('\n')
+            lines = response.strip().split("\n")
             should_split = False
             sub_questions = []
 
@@ -203,7 +201,9 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
                                     for q in list_part.split(",")
                                 ]
                         except:
-                            logger.warning(f"Failed to parse sub-questions: {list_part}")
+                            logger.warning(
+                                f"Failed to parse sub-questions: {list_part}"
+                            )
                             sub_questions = []
 
             # Validation: ensure sub-questions are meaningful
@@ -226,6 +226,7 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
         except Exception as e:
             logger.warning(f"Error parsing splitting response: {e}")
             return False, []
+
 
 class PaperTitleExtractor:
     """
@@ -1217,23 +1218,21 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
 
         return retrieved_abstracts, filtered_doc_ids
 
-    def answer_query(self, query, db=None, choices=None, should_split=None, sub_questions=None):
+    def answer_query(self, query, db=None, choices=None, should_split=False, sub_questions=None):
         """
-        ENHANCED: Process query with 4-agent approach, question splitting, and parallel processing
+        ENHANCED: Process query with 4-agent approach, question splitting, and context management
         """
+
         with time_block("total_4agent_processing"):
             logger.info(f"Processing query with enhanced 4-agent approach: {query}")
 
             # Initialize enhanced citation handler
             citation_handler = EnhancedCitationHandler(self.index_dir)
-            
-            # If should_split and sub_questions are not provided, analyze the query
-            if should_split is None or sub_questions is None:
-                logger.info("Analyzing query for splitting...")
-                should_split, sub_questions = self.question_splitter.analyze_and_split(query)
-            
+
             if should_split and sub_questions:
-                logger.info(f"Processing {len(sub_questions)} sub-questions in parallel")
+                logger.info(
+                    f"Processing {len(sub_questions)} sub-questions in parallel"
+                )
                 questions_to_process = sub_questions
             else:
                 logger.info("Processing single question")
