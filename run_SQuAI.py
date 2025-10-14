@@ -79,17 +79,13 @@ Query: "what is page rank algorithm and who invented it?"
 Split: YES
 Sub-questions: ["What is page rank algorithm?", "Who invented page rank algorithm?"]
 
-Query: "What are the applications and limitations of machine learning?"
-Split: NO (same topic, different aspects)
+Query: "What is reinforcement learning?"
+Split: NO
 Sub-questions: []
 
 Query: "How does BERT work and what is GPT-3?"
 Split: YES  
 Sub-questions: ["How does BERT work?", "What is GPT-3?"]
-
-Query: "What is the difference between supervised and unsupervised learning?"
-Split: NO (comparison of related concepts)
-Sub-questions: []
 
 Query: "What are neural networks and how do they learn and what are CNNs?"
 Split: YES
