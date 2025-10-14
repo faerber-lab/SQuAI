@@ -1,0 +1,20 @@
+{"id": 1, "question": "What is blockchain technology and how does it ensure security?"}
+{"id": 2, "question": "Explain the concept of gradient descent in neural networks"}
+{"id": 3, "question": "What is reinforcement learning and how is it different from supervised learning?"}
+{"id": 4, "question": "What are the main types of machine learning algorithms?"}
+{"id": 5, "question": "What is Docker containerization and how does it improve deployment?"}
+{"id": 6, "question": "How do transformers work in natural language processing?"}
+{"id": 7, "question": "What is quantum computing and its potential applications in cryptography?"}
+{"id": 8, "question": "What is the purpose of activation functions in neural networks?"}
+{"id": 9, "question": "What is differential privacy and its role in data protection?"}
+{"id": 10, "question": "Explain the concept of overfitting in machine learning"}
+{"id": 11, "question": "How does gradient descent work and what are its variants?"}
+{"id": 12, "question": "What is cross-validation and why is it important?"}
+{"id": 13, "question": "What is continuous integration and what is continuous deployment?"}
+{"id": 14, "question": "How does batch normalization improve neural network training?"}
+{"id": 15, "question": "What is precision in machine learning and what is recall?"}
+{"id": 16, "question": "What are the advantages of using cloud computing?"}
+{"id": 17, "question": "What is attention mechanism, how does it work, and why is it important in transformers?"}
+{"id": 18, "question": "Describe the architecture of a convolutional neural network"}
+{"id": 19, "question": "What is supervised learning and how does it differ from unsupervised learning?"}
+{"id": 20, "question": "What is the role of regularization in machine learning?"}
