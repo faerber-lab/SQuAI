@@ -1,18 +1,85 @@
 import os
 import sys
 import subprocess
+import re
+from datetime import datetime, timedelta
+
+def parse_remaining_time(remaining_str):
+    """
+    Wandelt Strings wie '99 days 22 hours' in timedelta um.
+    """
+    days_match = re.search(r"(\d+)\s+days?", remaining_str)
+    hours_match = re.search(r"(\d+)\s+hours?", remaining_str)
+
+    days = int(days_match.group(1)) if days_match else 0
+    hours = int(hours_match.group(1)) if hours_match else 0
+
+    return timedelta(days=days, hours=hours)
+
+def get_ws_list_paths(min_days=8):
+    """
+    Ruft ws_list auf und gibt den Pfad des Workspaces mit der höchsten Nummer zurück,
+    dessen Restlaufzeit mehr als min_days beträgt.
+    """
+    print("Trying to look for workspace...")
+    try:
+        result = subprocess.run(
+            ["ws_list"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        output = result.stdout
+
+        print(f"ws_list result: {result}")
+    except Exception as e:
+        sys.stderr.write(f"Fehler beim Ausführen von ws_list: {e}\n")
+        return None
+
+    ws_entries = re.findall(
+        r"^id:\s*(faiss(?:_\d+)?)\s*[\s\S]*?workspace directory\s*:\s*(\S+)\s*[\s\S]*?remaining time\s*:\s*(.*?)\n",
+        output,
+        re.MULTILINE
+    )
+
+    print(f"ws_entries: {ws_entries}")
+
+    valid_workspaces = []
+
+    for ws_name, ws_path, remaining_str in ws_entries:
+        remaining = parse_remaining_time(remaining_str)
+        print(f"Workspace: {ws_name} ({ws_path}, remaining: {remaining})")
+        if remaining > timedelta(days=min_days):
+            # Extrahiere Zahl am Ende des Namens oder 0, wenn faiss
+            number_match = re.search(r"faiss(?:_(\d+))?", ws_name)
+            number = int(number_match.group(1)) if number_match and number_match.group(1) else 0
+            valid_workspaces.append((number, ws_path))
+
+    if not valid_workspaces:
+        print("No valid workspace found")
+        return None
+
+    # Höchste Nummer auswählen
+    valid_workspaces.sort(reverse=True, key=lambda x: x[0])
+    print(f"Using found valid workspace: {valid_workspaces[0][1]}")
+    return valid_workspaces[0][1]
 
 def get_main_data_dir():
+    # Erst ws_list versuchen
+    ws_path = get_ws_list_paths(min_days=8)
+    if ws_path and os.path.isdir(ws_path):
+        return ws_path
+
+    # Fallback wie bisher
     fallback_paths = [
-        f"{os.getenv('HOME')}/data_dir",
+        "/projects/p_scads_finetune/squai_faiss",
         "/data/horse/ws/inbe405h-unarxive",
-        "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
     ]
 
     resolved_path = None
 
     for path in fallback_paths:
-        # Erst prüfen, ob es eine "data_dir"-Datei ist
+        # Prüfen, ob es eine "data_dir"-Datei ist
         if os.path.isfile(path):
             try:
                 with open(path, "r") as f:
@@ -24,7 +91,7 @@ def get_main_data_dir():
                 sys.stderr.write(f"Fehler beim Lesen von {path}: {e}\n")
                 continue
 
-        # Wenn es direkt ein Verzeichnis ist
+        # Direktes Verzeichnis prüfen
         if os.path.isdir(path):
             resolved_path = path
             break
@@ -36,6 +103,7 @@ def get_main_data_dir():
         )
         sys.exit(1)
 
+    print(f"get_main_data_dir: Using resolved path: {resolved_path}")
     return resolved_path
 
 def get_bm25_python_path():

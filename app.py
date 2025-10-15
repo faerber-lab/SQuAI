@@ -1,6 +1,49 @@
-import streamlit as st
-import requests
-import time
+import sys
+
+try:
+    import streamlit as st
+    import requests
+    import time
+    import os
+    import subprocess
+except ModuleNotFoundError as e:
+    print(f"Module not found: {e}. Did you run this script via frontend.sh?")
+    sys.exit(1)
+
+def get_script_path():
+    try:
+        # sys.argv[0] enthält den Namen des gestarteten Skripts
+        script_path = os.path.abspath(sys.argv[0])
+        return script_path
+    except Exception as e:
+        print("Error detecting the path:", str(e))
+        return None
+
+
+def start_backend():
+    script_dir = get_script_dir()
+    if script_dir is None:
+        return False
+
+    shell_script = os.path.join(script_dir, "start_backend_from_enterprise_cloud.sh")
+
+    if not os.path.isfile(shell_script):
+        print("Fehler: Script nicht gefunden:", shell_script)
+        return False
+
+    try:
+        # Startet das Script im Hintergrund, ohne dass es den Python-Prozess blockiert
+        process = subprocess.Popen(
+            ["bash", shell_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setpgrp   # verhindert Signalweitergabe (Linux/Unix)
+        )
+        print("Backend gestartet. PID:", process.pid)
+        return True
+    except Exception as e:
+        print("Fehler beim Starten des Backends:", str(e))
+        return False
 
 st.set_page_config(page_title="SQuAI", layout="wide")
 st.title("SQuAI")
@@ -51,25 +94,95 @@ n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
 top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, step=1)
 alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
 
-def post_with_retry(url, payload, timeout=300, wait_between=5):
+
+
+def get_script_dir():
+    try:
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+    except Exception as e:
+        print("Error while determining script directory:", str(e))
+        return None
+
+def start_backend():
+    script_dir = get_script_dir()
+    if script_dir is None:
+        return False
+
+    shell_script = os.path.join(script_dir, "start_backend_from_enterprise_cloud.sh")
+
+    if not os.path.isfile(shell_script):
+        print("Error: Script not found:", shell_script)
+        return False
+
+    try:
+        process = subprocess.Popen(
+            ["bash", shell_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setpgrp
+        )
+        print("Backend started. PID:", process.pid)
+        return True
+    except Exception as e:
+        print("Error while starting backend:", str(e))
+        return False
+
+def wait_for_backend(url, timeout=60, wait_between=2):
+    """Wait until the backend endpoint becomes available."""
     start_time = time.time()
     while True:
         try:
-            response = requests.post(url, json=payload)
-            response.raise_for_status()  # raises error on HTTP 4xx/5xx
-            return response
-        except Exception as e:
-            if time.time() - start_time > timeout:
-                print(f"Giving up after {timeout} seconds: {e}")
-                raise
-            print(f"Error while trying to connect to {url}: {e}, retrying in {wait_between} seconds...")
-            time.sleep(wait_between)
+            r = requests.get(url)
+            if r.status_code == 200:
+                print("Backend is available.")
+                return True
+        except Exception:
+            pass
+
+        if time.time() - start_time > timeout:
+            print(f"Backend not reachable after {timeout} seconds.")
+            return False
+
+        time.sleep(wait_between)
+
+def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_restarts=5):
+    backend_restarts = 0
+
+    while backend_restarts < max_backend_restarts:
+        # In each cycle: try up to max_retries times directly
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, json=payload)
+                response.raise_for_status()
+                return response
+            except Exception as e:
+                print(f"POST attempt {attempt+1}/{max_retries} failed: {e}")
+                time.sleep(wait_between)
+
+        # All attempts failed → start backend
+        print(f"All {max_retries} attempts failed. Starting backend...")
+        if start_backend():
+            backend_restarts += 1
+            # Wait until backend is reachable
+            if not wait_for_backend("http://localhost:8000", timeout=120):
+                print("Backend did not become available in time.")
+                continue
+        else:
+            print("Backend could not be started.")
+            backend_restarts += 1
+
+    # If we reach here, all backend restarts have failed
+    raise RuntimeError(f"POST failed after {max_backend_restarts} backend restarts")
+
+
 
 with st.form(key="qa_form"):
     question = st.text_input("🔎 Enter your question:")
     submit = st.form_submit_button("Generate Answer")
 
 if submit and question:
+    split_response = None
+
     with st.spinner("Analyzing Question..."):
         split_url = "http://localhost:8000/split"
         split_payload = {
@@ -81,9 +194,12 @@ if submit and question:
             "alpha": alpha,
         }
 
-        split_response = post_with_retry(split_url, split_payload)
+        try:
+            split_response = post_with_retry(split_url, split_payload)
+        except RuntimeError as e:
+            st.markdown(f"{e}")
 
-    if split_response.status_code == 200:
+    if split_response is not None and split_response.status_code == 200:
         split_data = split_response.json()
         should_split = split_data.get("should_split")
         sub_questions = split_data.get("sub_questions", [])

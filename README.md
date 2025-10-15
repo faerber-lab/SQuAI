@@ -126,3 +126,7 @@ SQuAI improves combined scores by up to **12%** in faithfulness compared to a st
 ### `$HOME/data_dir`
 
 For the case that you want to change where the FAISS data is stored, create a file in `$HOME/data_dir`, in which a path to your workspace is. If no such file is defined or it is empty, `/data/horse/ws/inbe405h-unarxive` will be used by default.
+
+### How to restart the service if it isn't working:
+
+`sudo systemctl restart squai-frontend.service`
