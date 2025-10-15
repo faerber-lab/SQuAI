@@ -637,6 +637,11 @@ class EnhancedCitationHandler:
     def _extract_context_passage_semantic(self, answer_text: str, document_text: str, citation_num: int) -> str:
         """Extract passages using semantic similarity with E5 embeddings"""
         
+        # Check if model is available
+        if not self.use_semantic or self.e5_model is None:
+            logger.warning("Semantic similarity not available, falling back to word-overlap")
+            return self._extract_context_passage_original(answer_text, document_text, citation_num)
+        
         # 1. Find claims around citations
         citation_pattern = f'\\[{citation_num}\\]'
         matches = list(re.finditer(citation_pattern, answer_text))
@@ -645,127 +650,176 @@ class EnhancedCitationHandler:
             logger.debug(f"No citation [{citation_num}] found in answer")
             return self._basic_fallback(document_text)
         
-        # Extract sentences containing citations
+        # Extract sentences/claims that have this citation
         claims = []
         for match in matches:
-            # Get surrounding context (before citation)
-            start = max(0, match.start() - 200)
-            end = match.start()
+            # Get text before the citation (this is what the citation supports)
+            # Look back up to 200 characters or to the previous sentence
+            start_pos = max(0, match.start() - 200)
+            text_before = answer_text[start_pos:match.start()].strip()
             
-            # Try to get complete sentence
-            text_before = answer_text[start:end].strip()
+            # Try to extract complete sentence
+            sentences_in_answer = text_before.split('.')
+            if sentences_in_answer:
+                # Get the last sentence before citation
+                last_sentence = sentences_in_answer[-1].strip()
+                if last_sentence and len(last_sentence) > 10:
+                    claims.append(last_sentence)
             
-            # Find sentence boundaries
-            last_period = text_before.rfind('.')
-            if last_period > 0:
-                text_before = text_before[last_period + 1:].strip()
-            
-            if text_before:
-                claims.append(text_before)
+            # Also check if there's text between this citation and the next sentence end
+            end_pos = answer_text.find('.', match.end())
+            if end_pos == -1:
+                end_pos = len(answer_text)
+            text_after = answer_text[match.end():end_pos].strip()
+            if text_after and len(text_after) > 10:
+                # Combine with text before for context
+                full_claim = text_before[-100:] + f" [{citation_num}] " + text_after
+                claims.append(full_claim.strip())
         
         if not claims:
-            logger.debug(f"No claims found for citation [{citation_num}]")
+            logger.debug(f"No claims extracted for citation [{citation_num}]")
             return self._basic_fallback(document_text)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_claims = []
+        for claim in claims:
+            if claim not in seen:
+                seen.add(claim)
+                unique_claims.append(claim)
+        claims = unique_claims
+        
+        logger.debug(f"Extracted {len(claims)} claims for citation [{citation_num}]")
         
         # 2. Clean and split document into sentences
         clean_doc = self._basic_text_cleaning(document_text)
-        sentences = re.split(r'[.!?]+', clean_doc)
+        
+        # Better sentence splitting
+        import re
+        sentences = re.split(r'(?<=[.!?])\s+', clean_doc)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
         
         if not sentences:
             return self._basic_fallback(document_text)
         
+        # Limit sentences for performance (max 200 sentences)
+        if len(sentences) > 200:
+            logger.debug(f"Document has {len(sentences)} sentences, limiting to 200 for performance")
+            sentences = sentences[:200]
+        
         try:
-            # 3. Get embeddings using the E5 model from retriever
             import numpy as np
-            from sentence_transformers import SentenceTransformer
             
-            # Access the E5 model through the retriever
-            # The retriever has e5_retriever which has the model
-            if hasattr(self.retriever.e5_retriever, 'model'):
-                model = self.retriever.e5_retriever.model
-            elif hasattr(self.retriever.e5_retriever, 'e5'):
-                model = self.retriever.e5_retriever.e5.model
-            else:
-                # If we can't find the model, fall back
-                logger.warning("Cannot find E5 model in retriever, falling back to word-overlap")
-                return self._extract_context_passage_original(answer_text, document_text, citation_num)
-            
-            # Encode claims and document sentences
-            logger.debug(f"Encoding {len(claims)} claims and {len(sentences)} sentences")
-            
-            # Add prefix for E5 model (required for better performance)
+            # 3. Encode claims and sentences with E5 model
+            # E5 model requires specific prefixes for better performance
             claims_with_prefix = [f"query: {claim}" for claim in claims]
             sentences_with_prefix = [f"passage: {sent}" for sent in sentences]
             
-            claim_embeddings = model.encode(claims_with_prefix, convert_to_numpy=True, show_progress_bar=False)
-            sentence_embeddings = model.encode(sentences_with_prefix, convert_to_numpy=True, show_progress_bar=False)
+            # Batch encoding for efficiency
+            logger.debug(f"Encoding {len(claims)} claims and {len(sentences)} sentences")
             
-            # 4. Compute cosine similarity
-            # Normalize embeddings
-            claim_embeddings = claim_embeddings / np.linalg.norm(claim_embeddings, axis=1, keepdims=True)
-            sentence_embeddings = sentence_embeddings / np.linalg.norm(sentence_embeddings, axis=1, keepdims=True)
+            # Encode with normalization
+            claim_embeddings = self.e5_model.encode(
+                claims_with_prefix, 
+                convert_to_numpy=True, 
+                show_progress_bar=False,
+                normalize_embeddings=True  # E5 works better with normalized embeddings
+            )
             
-            # Compute similarities
+            sentence_embeddings = self.e5_model.encode(
+                sentences_with_prefix, 
+                convert_to_numpy=True, 
+                show_progress_bar=False,
+                normalize_embeddings=True
+            )
+            
+            # 4. Compute cosine similarity (already normalized, so just dot product)
             similarities = np.dot(claim_embeddings, sentence_embeddings.T)
             
             # 5. Find most relevant sentences
             relevant_indices = set()
-            threshold = 0.5  # Similarity threshold
+            
+            # Different thresholds for different confidence levels
+            high_confidence_threshold = 0.7
+            medium_confidence_threshold = 0.5
             
             for claim_idx, claim_sims in enumerate(similarities):
                 # Get top-k most similar sentences
-                top_k = min(3, len(sentences))
-                top_indices = np.argsort(claim_sims)[-top_k:]
+                top_k = min(5, len(sentences))
+                top_indices = np.argsort(claim_sims)[-top_k:][::-1]  # Sort descending
                 
+                # Add high confidence matches
                 for idx in top_indices:
-                    if claim_sims[idx] > threshold:
-                        # Add this sentence and context
+                    if claim_sims[idx] > high_confidence_threshold:
                         relevant_indices.add(idx)
-                        
-                        # Add surrounding sentences for context
+                        # Add one sentence before and after for context
                         if idx > 0:
                             relevant_indices.add(idx - 1)
                         if idx < len(sentences) - 1:
                             relevant_indices.add(idx + 1)
+                    elif claim_sims[idx] > medium_confidence_threshold:
+                        # Only add the sentence itself for medium confidence
+                        relevant_indices.add(idx)
+                
+                # Ensure we have at least the top match if nothing meets threshold
+                if not relevant_indices and len(top_indices) > 0:
+                    relevant_indices.add(top_indices[0])
             
             # 6. Build passage from relevant sentences
             if relevant_indices:
                 sorted_indices = sorted(relevant_indices)
                 
-                # Group consecutive indices for better flow
-                passage_parts = []
+                # Group consecutive indices for better readability
+                groups = []
                 current_group = [sorted_indices[0]]
                 
                 for idx in sorted_indices[1:]:
                     if idx == current_group[-1] + 1:
+                        # Consecutive sentence
                         current_group.append(idx)
                     else:
                         # Start new group
-                        passage_parts.append(current_group)
+                        if current_group:
+                            groups.append(current_group)
                         current_group = [idx]
-                passage_parts.append(current_group)
                 
-                # Build passage from groups
-                passages = []
-                for group in passage_parts[:2]:  # Max 2 groups to keep it concise
-                    group_sentences = [sentences[i] for i in group]
-                    passages.append('. '.join(group_sentences))
+                if current_group:
+                    groups.append(current_group)
                 
-                final_passage = ' [...] '.join(passages)
+                # Build passage from groups (max 3 groups to keep it concise)
+                passage_parts = []
+                total_length = 0
+                max_passage_length = 500
                 
-                # Trim if too long
-                if len(final_passage) > 500:
-                    final_passage = final_passage[:497] + '...'
+                for group in groups[:3]:
+                    group_text = ' '.join([sentences[i] for i in group])
+                    
+                    # Check if adding this group would exceed length limit
+                    if total_length + len(group_text) > max_passage_length and passage_parts:
+                        break
+                        
+                    passage_parts.append(group_text)
+                    total_length += len(group_text)
+                
+                # Join groups with ellipsis if non-consecutive
+                if len(passage_parts) > 1:
+                    final_passage = ' [...] '.join(passage_parts)
+                else:
+                    final_passage = passage_parts[0] if passage_parts else ""
+                
+                # Final length check
+                if len(final_passage) > max_passage_length:
+                    final_passage = final_passage[:max_passage_length-3] + '...'
                 
                 logger.debug(f"Extracted passage with {len(relevant_indices)} sentences using semantic similarity")
                 return final_passage
+                
             else:
-                logger.debug(f"No sentences above similarity threshold for citation [{citation_num}]")
+                logger.debug(f"No relevant sentences found for citation [{citation_num}]")
                 return self._basic_fallback(document_text)
                 
         except Exception as e:
-            logger.error(f"Semantic similarity extraction failed: {e}")
+            logger.error(f"Semantic similarity extraction failed: {e}", exc_info=True)
             # Fall back to original method
             return self._extract_context_passage_original(answer_text, document_text, citation_num)
 
@@ -775,7 +829,13 @@ class EnhancedCitationHandler:
         """
         if self.use_semantic:
             try:
-                return self._extract_context_passage_semantic(answer_text, document_text, citation_num)
+                passage = self._extract_context_passage_semantic(answer_text, document_text, citation_num)
+                # Validate the passage
+                if passage and len(passage) > 30:  # Ensure we got something meaningful
+                    return passage
+                else:
+                    logger.warning(f"Semantic extraction returned short/empty passage, trying word-overlap")
+                    return self._extract_context_passage_original(answer_text, document_text, citation_num)
             except Exception as e:
                 logger.warning(f"Semantic extraction failed, falling back to word-overlap: {e}")
                 return self._extract_context_passage_original(answer_text, document_text, citation_num)
@@ -872,6 +932,11 @@ class EnhancedCitationHandler:
 
     def format_references(self, answer_text: str = None) -> str:
         """Format references with proper metadata and context passages"""
+
+        # Log which extraction method is being used
+        extraction_method = "semantic similarity" if self.use_semantic else "word overlap"
+        logger.info(f"Formatting references using {extraction_method} extraction method")
+
         if not self.citation_to_doc:
             return ""
 
@@ -963,19 +1028,31 @@ class EnhancedCitationHandler:
         """
         Basic fallback to return beginning of document when extraction fails
         """
+        # Clean the text
         clean_text = self._basic_text_cleaning(document_text)
-        sentences = re.split(r'[.!?]+', clean_text)
+        
+        # Try to get first few sentences
+        sentences = re.split(r'(?<=[.!?])\s+', clean_text)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
         
         if sentences:
-            # Return first 2-3 sentences
-            fallback = '. '.join(sentences[:3]) + '.'
-            if len(fallback) > max_chars:
-                fallback = fallback[:max_chars-3] + '...'
-            return fallback
-        else:
-            # Last resort: return first N characters
-            return document_text[:max_chars-3] + '...' if len(document_text) > max_chars else document_text
+            # Return first 2-3 meaningful sentences
+            result = []
+            total_length = 0
+            for sent in sentences[:5]:  # Check first 5 sentences
+                if total_length + len(sent) <= max_chars:
+                    result.append(sent)
+                    total_length += len(sent)
+                else:
+                    break
+            
+            if result:
+                return ' '.join(result)
+        
+        # Last resort: return first N characters
+        if len(clean_text) > max_chars:
+            return clean_text[:max_chars-3] + '...'
+        return clean_text
 
 class Enhanced4AgentRAG:
     """
