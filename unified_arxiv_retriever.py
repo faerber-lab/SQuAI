@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Unified Retriever - E5 + BM25 Hybrid Retrieval
-Optimized based on test results, adapted for your arXiv index structure
+E5 + BM25 hybrid retriever with optimized caching and mapping
+Maintains compatibility with existing interfaces
 """
 
 import json
@@ -23,45 +23,44 @@ logger = logging.getLogger(__name__)
 
 class E5DirectRetriever:
     """
-    Optimized version: Uses cached mapping to avoid rebuilding each time
-    First run takes 5 minutes to build mapping, subsequent runs only take seconds to load
+    E5 direct retriever with FAISS and SQLite mapping
     """
     
     def __init__(self, index_directory: str, model_name: str = "intfloat/e5-large-v2"):
         self.index_dir = Path(index_directory)
         self.model_name = model_name
         
-        # Mapping cache file path
+        # mapping cache file
         self.mapping_cache_file = self.index_dir / "faiss_document_mapping.pkl"
         
-        logger.info(f"Initializing E5 retriever: {index_directory}")
+        logger.info(f"Initialize E5: {index_directory}")
         
-        # Load FAISS index
+        # load FAISS index
         self._load_index()
         
-        # Load or build mapping
+        # load or build mapping
         if self.mapping_cache_file.exists():
             self._load_cached_mapping()
         else:
-            logger.info("First run, need to build mapping (about 5 minutes)...")
+            logger.info("Building mapping...")
             self._connect_db()
             self._build_and_save_mapping()
         
-        # Load and optimize E5 model
+        # load and optimize E5 model
         self._load_model()
         
-        # Query cache
+        # query cache
         self._cache = {}
         self._cache_size = 100
         
-        logger.info(f"E5 retriever initialization complete")
+        logger.info(f"E5 retriever ready")
     
     def _load_index(self):
         """Load FAISS index"""
         index_path = self.index_dir / "faiss_index"
         self.index = faiss.read_index(str(index_path))
         logger.info(f"FAISS index loaded: {self.index.ntotal:,} vectors, dimension {self.index.d}")
-    
+
     def _load_cached_mapping(self):
         """Load mapping from cache file (fast)"""
         logger.info(f"Loading mapping from cache: {self.mapping_cache_file}")
@@ -79,115 +78,205 @@ class E5DirectRetriever:
             self.doc_metadata = cache_data['doc_metadata']
             
             elapsed = time.time() - start_time
-            logger.info(f"Mapping loaded: {len(self.faiss_to_doc):,} entries ({elapsed:.1f}s)")
-        except Exception as e:
-            logger.error(f"Failed to load cache: {e}")
-            logger.info("Rebuilding mapping...")
+            logger.info(f"✓ Mapping loaded: {len(self.faiss_to_doc):,} documents (耗时 {elapsed:.1f}秒)")
+
+        except (EOFError, pickle.UnpicklingError, ValueError) as e:
+            logger.warning(f"Cache file is not complete: {e}")
+            logger.info("Deleting corrupted cache and rebuilding mapping...")
+            
+            # Delete corrupted cache
+            if self.mapping_cache_file.exists():
+                self.mapping_cache_file.unlink()
+            
+            # Rebuild
             self._connect_db()
             self._build_and_save_mapping()
     
     def _connect_db(self):
-        """Connect to SQLite database"""
-        db_path = self.index_dir / "document_metadata.db"
-        self.conn = sqlite3.connect(str(db_path))
-        self.cursor = self.conn.cursor()
-    
+        """Connect to SQLite database (only when mapping needs to be built)"""
+        db_path = self.index_dir / "index_store.db"
+        self.db_conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        self.db_cursor = self.db_conn.cursor()
+        
+        # Validate connection
+        self.db_cursor.execute("SELECT COUNT(*) FROM document")
+        doc_count = self.db_cursor.fetchone()[0]
+        logger.info(f"SQLite database connection: {doc_count:,} documents")
+
     def _build_and_save_mapping(self):
-        """Build and save FAISS index to document ID mapping (for first run)"""
-        logger.info("Building FAISS to document mapping...")
+        """Build mapping and save to cache file (only needs to be run once)"""
+        logger.info("Building document mapping (this will take about 5 minutes, but only needs to be done once)...")
         start_time = time.time()
-        
-        # Get all document mappings
-        self.cursor.execute("SELECT faiss_index, doc_id, title, abstract FROM document_embeddings")
-        
+
+        # Creating mapping: FAISS index -> Document information
         self.faiss_to_doc = {}
+        
+        logger.info("  1/3 Getting vector_id mapping...")
+        self.db_cursor.execute("""
+            SELECT id, vector_id, content 
+            FROM document 
+            WHERE vector_id IS NOT NULL
+        """)
+        
+        all_docs = self.db_cursor.fetchall()
+        total_docs = len(all_docs)
+        
+        logger.info(f"  2/3 process {total_docs:,} documents...")
+        for i, (doc_id, vector_id_str, content) in enumerate(all_docs):
+            faiss_idx = int(vector_id_str)
+            self.faiss_to_doc[faiss_idx] = {
+                'id': doc_id,
+                'content': content
+            }
+            
+            if (i + 1) % 100000 == 0:
+                logger.info(f"    processed {i+1:,}/{total_docs:,} documents...")
+
+        # Loading metadata
+        logger.info("  3/3 Loading document metadata...")
         self.doc_metadata = {}
         
-        for faiss_idx, doc_id, title, abstract in self.cursor:
-            self.faiss_to_doc[faiss_idx] = doc_id
-            self.doc_metadata[doc_id] = {
-                'title': title,
-                'abstract': abstract
-            }
+        self.db_cursor.execute("""
+            SELECT document_id, name, value 
+            FROM meta_document
+            WHERE name = 'paper_id'
+        """)
         
-        # Save to cache
+        for doc_id, name, value in self.db_cursor.fetchall():
+            if doc_id not in self.doc_metadata:
+                self.doc_metadata[doc_id] = {}
+            
+            if value:
+                value = value.strip('"')
+            self.doc_metadata[doc_id]['paper_id'] = value
+
+        # Save to cache file
+        logger.info(f"Saving mapping to cache file: {self.mapping_cache_file}")
         cache_data = {
             'faiss_to_doc': self.faiss_to_doc,
-            'doc_metadata': self.doc_metadata
+            'doc_metadata': self.doc_metadata,
+            'created_at': time.time(),
+            'doc_count': len(self.faiss_to_doc)
         }
         
         with open(self.mapping_cache_file, 'wb') as f:
-            pickle.dump(cache_data, f)
+            pickle.dump(cache_data, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        # Close DB connection
+        self.db_conn.close()
         
         elapsed = time.time() - start_time
-        logger.info(f"Mapping built and saved: {len(self.faiss_to_doc):,} entries ({elapsed:.1f}s)")
-        
-        # Close database connection (no longer needed after caching)
-        self.conn.close()
+        logger.info(f"✓ Mapping built and saved successfully (elapsed time {elapsed:.1f} seconds)")
+        logger.info(f"  Next run will load cache directly, taking only a few seconds!")
     
     def _load_model(self):
-        """Load E5 model"""
+        """load and optimize E5 model"""
         logger.info(f"Loading E5 model: {self.model_name}")
         self.model = SentenceTransformer(self.model_name)
         
-        # Enable GPU if available
         if torch.cuda.is_available():
             self.model = self.model.cuda()
-            logger.info("E5 model moved to GPU")
+            logger.info("✓ E5 model running on GPU")
+            self.device = 'cuda'
         else:
-            logger.info("Using CPU (GPU not available)")
+            self.model = self.model.cpu()
+            logger.info("⚠ E5 model running on CPU (slower)")
+            self.device = 'cpu'
+        
+        self.model.eval()
+        
+        with torch.no_grad():
+            _ = self.model.encode("warmup", convert_to_numpy=True, show_progress_bar=False)
     
-    def retrieve(self, query: str, top_k: int = 5) -> List[Tuple[str, str]]:
+    def retrieve(self, query: str, top_k: int = 5) -> List[Dict]:
         """
-        Retrieve documents
-        Returns: List of (abstract, doc_id) tuples
+        using E5 to retrieve documents
         """
         # Check cache
         cache_key = f"{query}_{top_k}"
         if cache_key in self._cache:
             return self._cache[cache_key]
         
-        # Add E5 prefix
-        prefixed_query = f"query: {query}"
+        start_time = time.time()
         
-        # Generate query embedding
-        query_embedding = self.model.encode(
-            prefixed_query,
-            convert_to_tensor=True,
-            normalize_embeddings=True
-        )
+        query_text = f"query: {query}"
         
-        # Convert to numpy
-        if torch.cuda.is_available():
-            query_embedding = query_embedding.cpu().numpy()
-        else:
-            query_embedding = query_embedding.numpy()
+        with torch.no_grad():
+            query_embedding = self.model.encode(
+                query_text, 
+                convert_to_numpy=True, 
+                show_progress_bar=False,
+                normalize_embeddings=True
+            )
         
-        # Search
-        distances, indices = self.index.search(
-            query_embedding.reshape(1, -1),
-            top_k
-        )
+        query_embedding = query_embedding.reshape(1, -1).astype('float32')
         
-        # Build results
+        # FAISS search
+        distances, indices = self.index.search(query_embedding, top_k)
+        
         results = []
-        for idx in indices[0]:
-            if idx in self.faiss_to_doc:
-                doc_id = self.faiss_to_doc[idx]
-                if doc_id in self.doc_metadata:
-                    metadata = self.doc_metadata[doc_id]
-                    results.append((metadata['abstract'], doc_id))
+        for dist, faiss_idx in zip(distances[0], indices[0]):
+            if faiss_idx == -1:
+                continue
+            
+            if faiss_idx in self.faiss_to_doc:
+                doc_info = self.faiss_to_doc[faiss_idx]
+                doc_id = doc_info['id']
+                content = doc_info['content']
+                
+                metadata = self.doc_metadata.get(doc_id, {})
+                paper_id = metadata.get('paper_id', doc_id)
+                
+                results.append({
+                    "id": doc_id,
+                    "content": content,
+                    "score": float(dist),
+                    "paper_id": paper_id,
+                    "metadata": metadata
+                })
+            else:
+                logger.debug(f"FAISS index {faiss_idx} not found in mapping")
         
-        # Cache results
-        if len(self._cache) < self._cache_size:
-            self._cache[cache_key] = results
+        if len(self._cache) >= self._cache_size:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[cache_key] = results
         
+        elapsed = time.time() - start_time
+        
+        if elapsed > 5:
+            logger.warning(f"E5 retrieval slow: {elapsed:.3f} seconds")
+        else:
+            logger.info(f"E5 retrieval: {len(results)} results, elapsed time {elapsed:.3f} seconds")
+
         return results
+    
+    def retrieve_abstracts(self, query: str, top_k: int = 5) -> List[Tuple[str, str]]:
+        """
+        Retrieve abstracts (compatible interface)
+        
+        Returns:
+            List of (abstract_text, paper_id) tuples
+        """
+        docs = self.retrieve(query, top_k)
+        return [(doc["content"], doc["paper_id"]) for doc in docs]
+    
+    def rebuild_mapping_cache(self):
+        """rebuild mapping cache from scratch"""
+        logger.info("Rebuilding mapping cache...")
+        
+        # Remove old cache
+        if self.mapping_cache_file.exists():
+            self.mapping_cache_file.unlink()
+            logger.info("Old cache file deleted")
+        
+        # Rebuild
+        self._connect_db()
+        self._build_and_save_mapping()
     
     def close(self):
         """Clean up resources"""
-        if hasattr(self, 'conn'):
-            self.conn.close()
+        if hasattr(self, 'db_conn'):
+            self.db_conn.close()
         self._cache.clear()
         logger.info("E5 retriever closed")
 
@@ -211,31 +300,28 @@ class UnifiedArxivRetriever:
             bm25_index_directory: BM25 LlamaIndex index directory
             leveldb_path: LevelDB full-text storage path (optional)
             strategy: "e5", "bm25", or "hybrid"
-            alpha: E5 weight (hybrid mode)
-            top_k: Default number of documents to return
+            alpha: E5 weight (hybrid)
+            top_k: return top-k results
         """
         self.strategy = strategy
         self.alpha = alpha
         self.top_k = top_k
-        
-        logger.info(f"Initializing unified retriever - strategy: {strategy}")
-        
+
+        logger.info(f"initialize retriever - 策略: {strategy}")
+
         # Initialize E5 (if needed)
         self.e5 = None
         if strategy in ["e5", "hybrid"]:
             self.e5 = E5DirectRetriever(e5_index_directory)
             logger.info("E5 retriever loaded")
         
-        # Initialize BM25 (if needed)
         self.bm25 = None
         if strategy in ["bm25", "hybrid"]:
             try:
-                # Try using your fast implementation
                 from fast_llamaindex_retriever import FastLlamaIndexBM25Retriever
                 self.bm25 = FastLlamaIndexBM25Retriever(bm25_index_directory, top_k)
                 logger.info("BM25 retriever loaded (fast version)")
             except ImportError:
-                # Or use your BM25OnlyRetriever
                 try:
                     from bm25_only_retriever import BM25OnlyRetriever
                     self.bm25 = BM25OnlyRetriever(bm25_index_directory, top_k)
@@ -243,193 +329,145 @@ class UnifiedArxivRetriever:
                 except ImportError:
                     logger.warning("BM25 retriever not available")
         
-        # LevelDB (for full text)
+        # LevelDB
         self.leveldb = None
         if leveldb_path:
             try:
                 import plyvel
                 self.leveldb = plyvel.DB(leveldb_path, create_if_missing=False)
-                logger.info(f"LevelDB connected: {leveldb_path}")
+                logger.info(f"LevelDB connect: {leveldb_path}")
             except Exception as e:
-                logger.warning(f"LevelDB connection failed: {e}")
-        
-        # Parallel executor
+                logger.warning(f"LevelDB connect failed: {e}")
+
         self._executor = ThreadPoolExecutor(max_workers=2)
         
-        # Cache
+        # caching
         self._cache = {}
-        self._cache_size = 100
-    
-    def _normalize_scores(self, scores: List[float]) -> List[float]:
-        """Normalize scores to [0, 1]"""
-        if not scores:
-            return []
-        min_score = min(scores)
-        max_score = max(scores)
-        if max_score - min_score == 0:
-            return [1.0] * len(scores)
-        return [(s - min_score) / (max_score - min_score) for s in scores]
-    
-    def _retrieve_e5(self, query: str, top_k: int) -> List[Tuple[str, str, float]]:
-        """Retrieve using E5"""
-        if not self.e5:
-            return []
-        
-        results = self.e5.retrieve(query, top_k)
-        # Add normalized scores
-        scores = [1.0 / (i + 1) for i in range(len(results))]  # Simple ranking score
-        scores_norm = self._normalize_scores(scores)
-        
-        return [(abstract, doc_id, score) 
-                for (abstract, doc_id), score in zip(results, scores_norm)]
-    
-    def _retrieve_bm25(self, query: str, top_k: int) -> List[Tuple[str, str, float]]:
-        """Retrieve using BM25"""
-        if not self.bm25:
-            return []
-        
-        # Call BM25's retrieve_abstracts method
-        if hasattr(self.bm25, 'retrieve_abstracts'):
-            results = self.bm25.retrieve_abstracts(query, top_k)
-        else:
-            # Fallback
-            return []
-        
-        # Convert format and add scores
-        formatted_results = []
-        for i, (abstract, doc_id) in enumerate(results):
-            score = 1.0 / (i + 1)  # Simple ranking score
-            formatted_results.append((abstract, doc_id, score))
-        
-        # Normalize scores
-        if formatted_results:
-            scores = [r[2] for r in formatted_results]
-            scores_norm = self._normalize_scores(scores)
-            formatted_results = [(r[0], r[1], s) 
-                                for r, s in zip(formatted_results, scores_norm)]
-        
-        return formatted_results
+        self._cache_size = 50
     
     def retrieve_abstracts(self, query: str, top_k: int = None) -> List[Tuple[str, str]]:
         """
-        Main retrieval method - returns (abstract, doc_id) pairs
+        retrieve abstracts based on strategy
+        
+        Returns:
+            List of (abstract_text, paper_id) tuples
         """
         if top_k is None:
             top_k = self.top_k
         
-        # Check cache
         cache_key = f"{self.strategy}_{query}_{top_k}"
         if cache_key in self._cache:
-            logger.info(f"Cache hit for: {query[:50]}...")
+            logger.info("caching hit")
             return self._cache[cache_key]
         
-        logger.info(f"Retrieving with {self.strategy}: {query[:50]}...")
-        start_time = time.time()
+        logger.info(f"{self.strategy.upper()} retrieve: '{query}'")
         
         if self.strategy == "e5":
-            results = self._retrieve_e5(query, top_k)
-            final_results = [(r[0], r[1]) for r in results]
-            
+            result = self._retrieve_e5(query, top_k)
         elif self.strategy == "bm25":
-            results = self._retrieve_bm25(query, top_k)
-            final_results = [(r[0], r[1]) for r in results]
-            
-        elif self.strategy == "hybrid":
-            # Parallel retrieval
-            with self._executor as executor:
-                e5_future = executor.submit(self._retrieve_e5, query, top_k * 2)
-                bm25_future = executor.submit(self._retrieve_bm25, query, top_k * 2)
-                
-                e5_results = e5_future.result()
-                bm25_results = bm25_future.result()
-            
-            # Merge results
-            final_results = self._merge_results(e5_results, bm25_results, top_k)
+            result = self._retrieve_bm25(query, top_k)
+        else:  # hybrid
+            result = self._retrieve_hybrid(query, top_k)
         
-        else:
-            raise ValueError(f"Unknown strategy: {self.strategy}")
+        if len(self._cache) >= self._cache_size:
+            self._cache.pop(next(iter(self._cache)))
+        self._cache[cache_key] = result
         
-        elapsed = time.time() - start_time
-        logger.info(f"Retrieved {len(final_results)} documents ({elapsed:.2f}s)")
-        
-        # Cache results
-        if len(self._cache) < self._cache_size:
-            self._cache[cache_key] = final_results
-        
-        return final_results
+        return result
     
-    def _merge_results(self, e5_results: List, bm25_results: List, top_k: int) -> List[Tuple[str, str]]:
-        """Merge E5 and BM25 results"""
+    def _retrieve_e5(self, query: str, top_k: int) -> List[Tuple[str, str]]:
+        """E5 retrieve"""
+        if not self.e5:
+            logger.error("E5 not initialized")
+            return []
+        return self.e5.retrieve_abstracts(query, top_k)
+    
+    def _retrieve_bm25(self, query: str, top_k: int) -> List[Tuple[str, str]]:
+        """BM25 retrieve"""
+        if not self.bm25:
+            logger.error("BM25 not initialized")
+            return []
+        return self.bm25.retrieve_abstracts(query, top_k)
+    
+    def _retrieve_hybrid(self, query: str, top_k: int) -> List[Tuple[str, str]]:
+        """Hybrid retrieve"""
+        if not self.e5 or not self.bm25:
+            logger.error("Hybrid mode requires E5 and BM25")
+            return self._retrieve_e5(query, top_k) if self.e5 else []
+        
+        # Parallel retrieval
+        e5_future = self._executor.submit(self.e5.retrieve, query, top_k * 2)
+        bm25_future = self._executor.submit(self.bm25.retrieve_abstracts, query, top_k * 2)
+        
+        e5_results = e5_future.result()
+        bm25_results = bm25_future.result()
+        
         doc_scores = {}
-        doc_abstracts = {}
+        doc_contents = {}
         
-        # Process E5 results
-        for abstract, doc_id, score in e5_results:
-            doc_scores[doc_id] = self.alpha * score
-            doc_abstracts[doc_id] = abstract
-        
-        # Process BM25 results
-        for abstract, doc_id, score in bm25_results:
-            if doc_id in doc_scores:
-                doc_scores[doc_id] += (1 - self.alpha) * score
-            else:
-                doc_scores[doc_id] = (1 - self.alpha) * score
-                doc_abstracts[doc_id] = abstract
-        
-        # Sort and return top-k
+        # E5 results
+        for doc in e5_results:
+            paper_id = doc["paper_id"]
+            doc_scores[paper_id] = doc_scores.get(paper_id, 0) + self.alpha * doc["score"]
+            doc_contents[paper_id] = doc["content"]
+
+        # BM25 results
+        for i, (content, paper_id) in enumerate(bm25_results):
+            # BM25 score: use reciprocal rank as score
+            bm25_score = 1.0 / (i + 1)
+            doc_scores[paper_id] = doc_scores.get(paper_id, 0) + (1 - self.alpha) * bm25_score
+            if paper_id not in doc_contents:
+                doc_contents[paper_id] = content
+
+        # Sort and select top_k
         sorted_docs = sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)
         
         results = []
-        for doc_id, _ in sorted_docs[:top_k]:
-            results.append((doc_abstracts[doc_id], doc_id))
-        
+        for paper_id, _ in sorted_docs[:top_k]:
+            if paper_id in doc_contents:
+                results.append((doc_contents[paper_id], paper_id))
+
+        logger.info(f"Hybrid retrieve: E5({len(e5_results)}) + BM25({len(bm25_results)}) = {len(results)} results")
+
         return results
     
-    def retrieve_fulltexts(self, query: str, top_k: int = None) -> List[Tuple[str, str]]:
-        """Retrieve full texts"""
-        # First get abstracts
-        abstracts = self.retrieve_abstracts(query, top_k)
+    def get_full_texts(self, doc_ids: List[str], db=None) -> List[Tuple[str, str]]:
+        """
+        acquire full texts - add db parameter for flexibility
         
-        if not self.leveldb:
-            logger.warning("LevelDB not available, returning abstracts")
-            return abstracts
+        Args:
+            doc_ids: document IDs
+            db: LevelDB instance (optional)
         
-        # Get full texts
-        results = []
-        for _, doc_id in abstracts:
-            try:
-                full_text = self.leveldb.get(doc_id.encode())
-                if full_text:
-                    results.append((full_text.decode('utf-8'), doc_id))
-                else:
-                    results.append((f"[Full text not found: {doc_id}]", doc_id))
-            except Exception as e:
-                logger.error(f"Failed to retrieve full text for {doc_id}: {e}")
-                results.append((f"[Error retrieving: {doc_id}]", doc_id))
-        
-        return results
-    
-    def get_full_texts(self, doc_ids: List[str]) -> List[Tuple[str, str]]:
-        """Get full texts for specific document IDs"""
-        if not self.leveldb:
-            return [(f"[LevelDB not available]", doc_id) for doc_id in doc_ids]
-        
-        results = []
-        for doc_id in doc_ids:
-            try:
-                full_text = self.leveldb.get(doc_id.encode())
-                if full_text:
-                    results.append((full_text.decode('utf-8'), doc_id))
-                else:
-                    results.append((f"[Not found: {doc_id}]", doc_id))
-            except Exception as e:
-                logger.error(f"Failed to get {doc_id}: {e}")
-                results.append((f"[Error: {doc_id}]", doc_id))
-        
-        return results
+        Returns:
+            List of (full_text, doc_id) tuples
+        """
+        if not self.leveldb and db:
+            results = []
+            for doc_id in doc_ids:
+                try:
+                    content = db.get(doc_id.encode('utf-8'))
+                    if content:
+                        results.append((content.decode('utf-8'), doc_id))
+                except Exception as e:
+                    logger.error(f"acquire {doc_id} failed: {e}")
+            return results
+        elif self.leveldb:
+            results = []
+            for doc_id in doc_ids:
+                try:
+                    content = self.leveldb.get(doc_id.encode('utf-8'))
+                    if content:
+                        results.append((content.decode('utf-8'), doc_id))
+                except Exception as e:
+                    logger.error(f"acquire {doc_id} failed: {e}")
+            return results
+        else:
+            logger.warning("no LevelDB available for full text retrieval")
+            return []
     
     def close(self):
-        """Clean up resources"""
+        """clean up resources"""
         if self.e5:
             self.e5.close()
         if self.bm25 and hasattr(self.bm25, 'close'):
@@ -437,10 +475,9 @@ class UnifiedArxivRetriever:
         if self.leveldb:
             self.leveldb.close()
         self._executor.shutdown(wait=True)
-        logger.info("Unified retriever closed")
+        logger.info("retriever closed")
 
 
-# Usage example
 if __name__ == "__main__":
     import sys
     
@@ -449,17 +486,15 @@ if __name__ == "__main__":
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     
-    # Configure paths (adjust to your actual paths)
     E5_INDEX = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive/faiss_index"
     BM25_INDEX = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive/bm25_retriever"
-    LEVELDB = "/data/horse/ws/inbe405h-unarxive/full_text_db"  # If available
+    LEVELDB = "/data/horse/ws/inbe405h-unarxive/full_text_db"
     
-    # Test different strategies
     strategies = ["e5", "bm25", "hybrid"] if len(sys.argv) <= 1 else [sys.argv[1]]
     
     for strategy in strategies:
         print(f"\n{'='*60}")
-        print(f"Testing {strategy.upper()} strategy")
+        print(f"test {strategy.upper()} strategy")
         print('='*60)
         
         retriever = UnifiedArxivRetriever(
@@ -470,7 +505,6 @@ if __name__ == "__main__":
             alpha=0.65
         )
         
-        # Test queries
         queries = [
             "quantum computing algorithms",
             "deep learning transformers",
@@ -478,24 +512,23 @@ if __name__ == "__main__":
         ]
         
         for query in queries:
-            print(f"\nQuery: '{query}'")
+            print(f"\nquery: '{query}'")
             start = time.time()
             results = retriever.retrieve_abstracts(query, top_k=3)
             elapsed = time.time() - start
-            
-            print(f"Found {len(results)} results (time: {elapsed:.3f}s)")
+
+            print(f"found {len(results)} results (time: {elapsed:.3f}s)")
             for i, (abstract, paper_id) in enumerate(results, 1):
                 preview = abstract[:100] + "..." if len(abstract) > 100 else abstract
                 print(f"  [{i}] {paper_id}: {preview}")
         
-        # Test full text retrieval (if LevelDB is configured)
         if retriever.leveldb and results:
-            print("\nTesting full text retrieval...")
+            print("\ntest full text retrieval...")
             doc_ids = [paper_id for _, paper_id in results[:2]]
             full_texts = retriever.get_full_texts(doc_ids)
             for full_text, doc_id in full_texts:
                 print(f"  {doc_id}: {len(full_text)} characters")
         
         retriever.close()
-    
-    print("\nAll tests complete!")
+
+    print("\nAll tests completed!")
