@@ -695,7 +695,6 @@ class EnhancedCitationHandler:
         clean_doc = self._basic_text_cleaning(document_text)
         
         # Better sentence splitting
-        import re
         sentences = re.split(r'(?<=[.!?])\s+', clean_doc)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
         
