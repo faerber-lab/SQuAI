@@ -431,7 +431,7 @@ class PaperTitleExtractor:
 class EnhancedCitationHandler:
     """Enhanced citation handler with proper metadata extraction and context passages"""
 
-    def __init__(self, index_dir: str = "test_index"):
+    def __init__(self, index_dir: str = "test_index", retriever=None):
         self.doc_to_citation = {}
         self.citation_to_doc = {}
         self.next_citation_num = 1
@@ -446,16 +446,17 @@ class EnhancedCitationHandler:
         self.retriever = retriever
 
         # Check if we can use semantic similarity
-        self.use_semantic = (
-            retriever is not None and 
-            hasattr(retriever, 'e5_retriever') and 
-            retriever.e5_retriever is not None
-        )
+        self.use_semantic = False  # Default to False
         
-        if self.use_semantic:
-            logger.info("Citation handler initialized with semantic similarity support")
+        if retriever is not None:
+            # Check if retriever has the e5_retriever attribute
+            if hasattr(retriever, 'e5_retriever') and retriever.e5_retriever is not None:
+                self.use_semantic = True
+                logger.info("Citation handler initialized with semantic similarity support")
+            else:
+                logger.info("Citation handler initialized without E5 model (using word-overlap)")
         else:
-            logger.info("Citation handler initialized with word-overlap method")
+            logger.info("Citation handler initialized without retriever (using word-overlap)")
 
     def _connect_metadata_db(self):
         """Connect to metadata database"""
@@ -672,11 +673,15 @@ class EnhancedCitationHandler:
             from sentence_transformers import SentenceTransformer
             
             # Access the E5 model through the retriever
+            # The retriever has e5_retriever which has the model
             if hasattr(self.retriever.e5_retriever, 'model'):
                 model = self.retriever.e5_retriever.model
+            elif hasattr(self.retriever.e5_retriever, 'e5'):
+                model = self.retriever.e5_retriever.e5.model
             else:
-                # Fallback: load the model directly if needed
-                model = SentenceTransformer('intfloat/multilingual-e5-large')
+                # If we can't find the model, fall back
+                logger.warning("Cannot find E5 model in retriever, falling back to word-overlap")
+                return self._extract_context_passage_original(answer_text, document_text, citation_num)
             
             # Encode claims and document sentences
             logger.debug(f"Encoding {len(claims)} claims and {len(sentences)} sentences")
