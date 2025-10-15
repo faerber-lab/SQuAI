@@ -13,7 +13,8 @@ opensearch-py==2.8.0
 nltk
 accelerate
 plyvel
-farm-haystack
+# farm-haystack
 uvicorn
 streamlit
 fastapi
+llama-index
