@@ -445,18 +445,26 @@ class EnhancedCitationHandler:
 
         self.retriever = retriever
 
-        # Check if we can use semantic similarity
-        self.use_semantic = False  # Default to False
+        # Try to get or create E5 model
+        self.use_semantic = False
+        self.e5_model = None
         
-        if retriever is not None:
-            # Check if retriever has the e5_retriever attribute
-            if hasattr(retriever, 'e5_retriever') and retriever.e5_retriever is not None:
-                self.use_semantic = True
-                logger.info("Citation handler initialized with semantic similarity support")
-            else:
-                logger.info("Citation handler initialized without E5 model (using word-overlap)")
-        else:
-            logger.info("Citation handler initialized without retriever (using word-overlap)")
+        # Try to get model name from retriever
+        model_name = "intfloat/e5-large-v2"  # default
+        if retriever and hasattr(retriever, 'e5') and retriever.e5:
+            if hasattr(retriever.e5, 'model_name'):
+                model_name = retriever.e5.model_name
+        
+        # Load the model directly
+        try:
+            from sentence_transformers import SentenceTransformer
+            logger.info(f"Loading E5 model for citation extraction: {model_name}")
+            self.e5_model = SentenceTransformer(model_name)
+            self.use_semantic = True
+            logger.info("✓ Semantic similarity enabled for citation extraction")
+        except Exception as e:
+            logger.error(f"Failed to load E5 model: {e}")
+            logger.info("✗ Falling back to word-overlap method")
 
     def _connect_metadata_db(self):
         """Connect to metadata database"""
