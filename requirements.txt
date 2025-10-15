@@ -18,3 +18,4 @@ uvicorn
 streamlit
 fastapi
 llama-index
+llama-index-retrievers-bm25
