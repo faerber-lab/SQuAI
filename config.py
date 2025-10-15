@@ -10,6 +10,8 @@ USE_GPU = torch.cuda.is_available()
 
 # Configuration paths
 DATA_DIR = f"{MAIN_DATA_DIR}_extended_data"
-E5_INDEX_DIR = f"/data/horse/ws/jihe529c-main-rag/BM25/faiss_index"
+E5_INDEX_DIR = f"{MAIN_DATA_DIR}/faiss_index"
+# E5_INDEX_DIR = f"/data/horse/ws/jihe529c-main-rag/BM25/faiss_index"
 BM25_INDEX_DIR = f"{MAIN_DATA_DIR}/bm25_retriever"
-DB_PATH = f"/data/horse/ws/jihe529c-main-rag/BM25/db2"
+DB_PATH = f"{MAIN_DATA_DIR}/full_text_db"
+# DB_PATH = f"/data/horse/ws/jihe529c-main-rag/BM25/db2"
