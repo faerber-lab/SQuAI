@@ -1681,7 +1681,7 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                args.single_question
+                query
             )
             cited_answer, references, debug_info = ragent.answer_query(args.single_question, db, should_split, sub_questions)
             process_time = time.time() - start_time
@@ -1752,7 +1752,7 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                item["question"]
+                query
             )
             cited_answer, references, debug_info = ragent.answer_query(item["question"], db, should_split, sub_questions)
             process_time = time.time() - start_time
