@@ -443,20 +443,6 @@ class EnhancedCitationHandler:
         # Connect to metadata database
         self.metadata_db = self._connect_metadata_db()
 
-        self.retriever = retriever
-
-        # Check if we can use semantic similarity
-        self.use_semantic = (
-            retriever is not None and 
-            hasattr(retriever, 'e5_retriever') and 
-            retriever.e5_retriever is not None
-        )
-        
-        if self.use_semantic:
-            logger.info("Citation handler initialized with semantic similarity support")
-        else:
-            logger.info("Citation handler initialized with word-overlap method")
-
     def _connect_metadata_db(self):
         """Connect to metadata database"""
         try:
@@ -625,155 +611,10 @@ class EnhancedCitationHandler:
 
         return text.strip()
 
-    def _extract_context_passage_semantic(self, answer_text: str, document_text: str, citation_num: int) -> str:
-        """Extract passages using semantic similarity with E5 embeddings"""
-        
-        # 1. Find claims around citations
-        citation_pattern = f'\\[{citation_num}\\]'
-        matches = list(re.finditer(citation_pattern, answer_text))
-        
-        if not matches:
-            logger.debug(f"No citation [{citation_num}] found in answer")
-            return self._basic_fallback(document_text)
-        
-        # Extract sentences containing citations
-        claims = []
-        for match in matches:
-            # Get surrounding context (before citation)
-            start = max(0, match.start() - 200)
-            end = match.start()
-            
-            # Try to get complete sentence
-            text_before = answer_text[start:end].strip()
-            
-            # Find sentence boundaries
-            last_period = text_before.rfind('.')
-            if last_period > 0:
-                text_before = text_before[last_period + 1:].strip()
-            
-            if text_before:
-                claims.append(text_before)
-        
-        if not claims:
-            logger.debug(f"No claims found for citation [{citation_num}]")
-            return self._basic_fallback(document_text)
-        
-        # 2. Clean and split document into sentences
-        clean_doc = self._basic_text_cleaning(document_text)
-        sentences = re.split(r'[.!?]+', clean_doc)
-        sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
-        
-        if not sentences:
-            return self._basic_fallback(document_text)
-        
-        try:
-            # 3. Get embeddings using the E5 model from retriever
-            import numpy as np
-            from sentence_transformers import SentenceTransformer
-            
-            # Access the E5 model through the retriever
-            if hasattr(self.retriever.e5_retriever, 'model'):
-                model = self.retriever.e5_retriever.model
-            else:
-                # Fallback: load the model directly if needed
-                model = SentenceTransformer('intfloat/multilingual-e5-large')
-            
-            # Encode claims and document sentences
-            logger.debug(f"Encoding {len(claims)} claims and {len(sentences)} sentences")
-            
-            # Add prefix for E5 model (required for better performance)
-            claims_with_prefix = [f"query: {claim}" for claim in claims]
-            sentences_with_prefix = [f"passage: {sent}" for sent in sentences]
-            
-            claim_embeddings = model.encode(claims_with_prefix, convert_to_numpy=True, show_progress_bar=False)
-            sentence_embeddings = model.encode(sentences_with_prefix, convert_to_numpy=True, show_progress_bar=False)
-            
-            # 4. Compute cosine similarity
-            # Normalize embeddings
-            claim_embeddings = claim_embeddings / np.linalg.norm(claim_embeddings, axis=1, keepdims=True)
-            sentence_embeddings = sentence_embeddings / np.linalg.norm(sentence_embeddings, axis=1, keepdims=True)
-            
-            # Compute similarities
-            similarities = np.dot(claim_embeddings, sentence_embeddings.T)
-            
-            # 5. Find most relevant sentences
-            relevant_indices = set()
-            threshold = 0.5  # Similarity threshold
-            
-            for claim_idx, claim_sims in enumerate(similarities):
-                # Get top-k most similar sentences
-                top_k = min(3, len(sentences))
-                top_indices = np.argsort(claim_sims)[-top_k:]
-                
-                for idx in top_indices:
-                    if claim_sims[idx] > threshold:
-                        # Add this sentence and context
-                        relevant_indices.add(idx)
-                        
-                        # Add surrounding sentences for context
-                        if idx > 0:
-                            relevant_indices.add(idx - 1)
-                        if idx < len(sentences) - 1:
-                            relevant_indices.add(idx + 1)
-            
-            # 6. Build passage from relevant sentences
-            if relevant_indices:
-                sorted_indices = sorted(relevant_indices)
-                
-                # Group consecutive indices for better flow
-                passage_parts = []
-                current_group = [sorted_indices[0]]
-                
-                for idx in sorted_indices[1:]:
-                    if idx == current_group[-1] + 1:
-                        current_group.append(idx)
-                    else:
-                        # Start new group
-                        passage_parts.append(current_group)
-                        current_group = [idx]
-                passage_parts.append(current_group)
-                
-                # Build passage from groups
-                passages = []
-                for group in passage_parts[:2]:  # Max 2 groups to keep it concise
-                    group_sentences = [sentences[i] for i in group]
-                    passages.append('. '.join(group_sentences))
-                
-                final_passage = ' [...] '.join(passages)
-                
-                # Trim if too long
-                if len(final_passage) > 500:
-                    final_passage = final_passage[:497] + '...'
-                
-                logger.debug(f"Extracted passage with {len(relevant_indices)} sentences using semantic similarity")
-                return final_passage
-            else:
-                logger.debug(f"No sentences above similarity threshold for citation [{citation_num}]")
-                return self._basic_fallback(document_text)
-                
-        except Exception as e:
-            logger.error(f"Semantic similarity extraction failed: {e}")
-            # Fall back to original method
-            return self._extract_context_passage_original(answer_text, document_text, citation_num)
-
-    def _extract_context_passage(self, answer_text: str, document_text: str, citation_num: int) -> str:
-        """
-        Main extraction method that chooses between semantic and word-overlap methods
-        """
-        if self.use_semantic:
-            try:
-                return self._extract_context_passage_semantic(answer_text, document_text, citation_num)
-            except Exception as e:
-                logger.warning(f"Semantic extraction failed, falling back to word-overlap: {e}")
-                return self._extract_context_passage_original(answer_text, document_text, citation_num)
-        else:
-            return self._extract_context_passage_original(answer_text, document_text, citation_num)
-
-
-    def _extract_context_passage_original(
+    def _extract_context_passage(
         self, answer_text: str, document_text: str, citation_num: int
     ) -> str:
-        """Original word-overlap based extraction method (kept for backward compatibility)"""
+        """Extract specific sentence(s) used in the answer plus context"""
         try:
             # Clean the document text first
             try:
@@ -946,23 +787,6 @@ class EnhancedCitationHandler:
         """Get mapping from doc_id to citation number"""
         return self.doc_to_citation.copy()
 
-    def _basic_fallback(self, document_text: str, max_chars: int = 300) -> str:
-        """
-        Basic fallback to return beginning of document when extraction fails
-        """
-        clean_text = self._basic_text_cleaning(document_text)
-        sentences = re.split(r'[.!?]+', clean_text)
-        sentences = [s.strip() for s in sentences if len(s.strip()) > 20]
-        
-        if sentences:
-            # Return first 2-3 sentences
-            fallback = '. '.join(sentences[:3]) + '.'
-            if len(fallback) > max_chars:
-                fallback = fallback[:max_chars-3] + '...'
-            return fallback
-        else:
-            # Last resort: return first N characters
-            return document_text[:max_chars-3] + '...' if len(document_text) > max_chars else document_text
 
 class Enhanced4AgentRAG:
     """
@@ -1391,7 +1215,7 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
             logger.info(f"Processing query with enhanced 4-agent approach: {query}")
 
             # Initialize enhanced citation handler
-            citation_handler = EnhancedCitationHandler(self.index_dir, retriever=self.retriever)
+            citation_handler = EnhancedCitationHandler(self.index_dir)
             
             # If should_split and sub_questions are not provided, analyze the query
             if should_split is None or sub_questions is None:

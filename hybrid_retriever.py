@@ -1,4 +1,4 @@
-# hybrid_retriever.py - 完整版本，包装新retriever并保持所有接口兼容
+# hybrid_retriever.py
 
 from pathlib import Path
 import logging
@@ -21,7 +21,7 @@ def normalize(scores):
 
 class Retriever:
     """
-    包装UnifiedArxivRetriever以完全兼容旧接口
+    Wraps UnifiedArxivRetriever to be fully compatible with the old interface.
     """
     
     def __init__(self, e5_index_directory, bm25_index_directory, 
@@ -29,7 +29,7 @@ class Retriever:
         
         logger.info(f"Initializing {strategy.upper()} retriever...")
         
-        # 使用新的统一检索器
+        # Using the optimized retriever
         try:
             from unified_arxiv_retriever import UnifiedArxivRetriever
             self._inner = UnifiedArxivRetriever(
@@ -45,15 +45,12 @@ class Retriever:
         except Exception as e:
             logger.warning(f"Failed to load UnifiedArxivRetriever: {e}")
             self._using_new = False
-            # 这里可以添加降级逻辑
             raise
         
-        # 保持兼容的属性
         self.strategy = strategy
         self.alpha = alpha
         self.top_k = top_k
         
-        # 初始化兼容性属性（即使不使用）
         self._doc_cache = {}
         self._abstract_cache = {}
         self._fulltext_cache = {}
@@ -61,36 +58,35 @@ class Retriever:
         self._executor = ThreadPoolExecutor(max_workers=4)
         self._retrieval_times = []
         
-        # 兼容旧代码的属性
         self.e5 = self._inner.e5 if hasattr(self._inner, 'e5') else None
         self.bm25 = self._inner.bm25 if hasattr(self._inner, 'bm25') else None
-        self._bm25_retriever = self.bm25  # 别名
+        self._bm25_retriever = self.bm25
         
     def retrieve_abstracts(self, query: str, top_k: int = None) -> list:
-        """检索摘要 - 保持接口不变"""
+        """Retrieve abstracts with caching"""
         if top_k is None:
             top_k = self.top_k
             
         start_time = time.time()
-        
-        # 检查缓存
+
+        # Check cache
         cache_key = f"{self.strategy}_{query.lower().strip()}_{top_k}"
         if cache_key in self._abstract_cache:
             logger.info(f"⚡ {self.strategy.upper()} cache hit!")
             return self._abstract_cache[cache_key]
         
         logger.info(f"🔍 {self.strategy.upper()} retrieval for query: {query}")
-        
-        # 使用新retriever
+
+        # Use new retriever
         result = self._inner.retrieve_abstracts(query, top_k)
         
-        # 缓存结果
+        # Cache result
         if len(self._abstract_cache) >= self._cache_size:
             oldest_key = next(iter(self._abstract_cache))
             del self._abstract_cache[oldest_key]
         self._abstract_cache[cache_key] = result
         
-        # 记录时间
+        # Save retrieval time
         elapsed = time.time() - start_time
         self._retrieval_times.append(elapsed)
         if len(self._retrieval_times) > 100:
@@ -108,7 +104,7 @@ class Retriever:
         start_time = time.time()
         logger.info(f"{self.strategy.upper()}: Retrieving full texts for {len(doc_ids)} documents")
         
-        # 使用新retriever
+        # Use new retriever
         result = self._inner.get_full_texts(doc_ids, db)
         
         elapsed = time.time() - start_time
@@ -120,14 +116,14 @@ class Retriever:
         return result
     
     def retrieve(self, query: str, top_k: int = None):
-        """旧版retrieve方法 - 为了兼容"""
+        """Old retrieve method - for compatibility"""
         if top_k is None:
             top_k = self.top_k
             
-        # 获取abstracts
+        # Obtain abstracts
         abstracts = self.retrieve_abstracts(query, top_k)
         
-        # 转换为旧格式
+        # Transform to old format
         results = []
         for i, (text, doc_id) in enumerate(abstracts):
             results.append({
@@ -135,13 +131,13 @@ class Retriever:
                 "paper_id": doc_id,
                 "title": "Unknown",  
                 "abstract": text,
-                "semantic_score": 1.0 / (i + 1)  # 简单的排名分数
+                "semantic_score": 1.0 / (i + 1)  # Simple ranking score
             })
         
         return results
     
     def close(self):
-        """清理资源"""
+        """Clean up resources"""
         try:
             if hasattr(self._inner, 'close'):
                 self._inner.close()
@@ -162,14 +158,14 @@ class Retriever:
         logger.info("Retriever closed")
     
     def get_bm25_status(self):
-        """诊断方法"""
+        """Diagnostic method"""
         if self._using_new:
             return {"method": "optimized", "available": True, "status": "FAST"}
         else:
             return {"method": "unknown", "available": False, "status": "UNKNOWN"}
     
     def get_performance_stats(self):
-        """性能统计"""
+        """Performance statistics"""
         if self._retrieval_times:
             avg_time = sum(self._retrieval_times) / len(self._retrieval_times)
             return {
@@ -184,9 +180,8 @@ class Retriever:
             }
         return {"no_data": True}
     
-    # 以下是一些可能被调用的内部方法
     def _fast_normalize(self, scores):
-        """快速归一化"""
+        """Rapid normalization using numpy"""
         if len(scores) == 0:
             return scores
         min_score = np.min(scores)
@@ -196,21 +191,21 @@ class Retriever:
         return (scores - min_score) / (max_score - min_score)
     
     def _get_bm25_results(self, query, top_k):
-        """兼容方法 - 如果有代码直接调用这个"""
+        """Compatible method - if there is code, call this directly"""
         if self.bm25:
-            # 调用新retriever的BM25
+            # Call new retriever's BM25
             return self._inner._retrieve_bm25(query, top_k)
         return []
     
     def _get_e5_results(self, query, top_k):
-        """兼容方法 - 如果有代码直接调用这个"""  
+        """Compatible method - if there is code, call this directly"""
         if self.e5:
-            # 调用新retriever的E5
+            # Call new retriever's E5
             docs = self._inner.e5.retrieve(query, top_k)
-            # 转换格式
+            # Transform format
             return docs
         return []
     
     def _load_bm25_into_memory(self):
-        """兼容方法 - 返回None因为新系统自动处理"""
+        """Compatible method - return None because new system handles it automatically"""
         return None
