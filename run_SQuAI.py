@@ -624,7 +624,11 @@ class EnhancedCitationHandler:
                 clean_doc_text = cleaner.clean_for_citation_matching(document_text)
             except ImportError:
                 clean_doc_text = self._basic_text_cleaning(document_text)
-
+            
+            # NEW: Remove the [TOP xxx chars]: and [BOTTOM xxx chars]: prefixes
+            clean_doc_text = re.sub(r'\[TOP \d+ chars\]:\s*', '', clean_doc_text)
+            clean_doc_text = re.sub(r'\[BOTTOM \d+ chars\]:\s*', '', clean_doc_text)
+            
             # Find all sentences in the clean document
             sentences = re.split(r"[.!?]+", clean_doc_text)
             sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
