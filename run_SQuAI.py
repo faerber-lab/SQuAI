@@ -65,38 +65,57 @@ class QuestionSplitter:
 
 SPLITTING CRITERIA:
 - Split if query contains multiple distinct topics connected by "and", "also", "what about"
-- Split if query asks for comparisons between different concepts
-- Split if query has multiple question words (what, how, why, when, where)
+- Split if query asks for COMPARISONS or DIFFERENCES between concepts (e.g., "difference between X and Y")
+- Split if query asks for comparisons PLUS evaluation/preference (e.g., "which is better")
+- Split if query has multiple question words (what, how, why, when, where, which)
 - Split if query asks about a concept AND its implications/effects/applications
 - DO NOT split simple clarifications or related aspects of the same topic
 
 Examples:
+
 Query: "What is quantum computing and how is it used in cryptography?"
 Split: YES
 Sub-questions: ["What is quantum computing?", "How is quantum computing used in cryptography?"]
 
-Query: "what is page rank algorithm and who invented it?"
+Query: "What is the difference between dense and sparse retrieval and which one is better suited for RAG?"
+Split: YES
+Sub-questions: ["What is dense retrieval?", "What is sparse retrieval?", "Which retrieval method is better suited for RAG systems?"]
+
+Query: "Compare transformers and RNNs and explain which is better for sequence modeling"
+Split: YES
+Sub-questions: ["What are transformers?", "What are RNNs?", "Which architecture is better for sequence modeling?"]
+
+Query: "What is page rank algorithm and who invented it?"
 Split: YES
 Sub-questions: ["What is page rank algorithm?", "Who invented page rank algorithm?"]
-
-Query: "What is reinforcement learning?"
-Split: NO
-Sub-questions: []
 
 Query: "How does BERT work and what is GPT-3?"
 Split: YES  
 Sub-questions: ["How does BERT work?", "What is GPT-3?"]
 
+Query: "What are the advantages and disadvantages of federated learning?"
+Split: YES
+Sub-questions: ["What are the advantages of federated learning?", "What are the disadvantages of federated learning?"]
+
+Query: "What is reinforcement learning?"
+Split: NO
+Sub-questions: []
+
+Query: "Explain how attention mechanism works in transformers"
+Split: NO
+Sub-questions: []
+
 Query: "What are neural networks and how do they learn and what are CNNs?"
 Split: YES
 Sub-questions: ["What are neural networks?", "How do neural networks learn?", "What are CNNs?"]
 
-Query: "What is federated learning and its privacy implications?"
-Split: YES
-Sub-questions: ["What is federated learning?", "What are the privacy implications of federated learning?"]
-
 Now analyze this query:
 Query: "{query}"
+
+IMPORTANT: For comparison questions with evaluation (like "difference between X and Y and which is better"), always split into:
+1. Explanation of concept X
+2. Explanation of concept Y  
+3. Comparison/evaluation question
 
 Respond with ONLY this format:
 Split: YES/NO
