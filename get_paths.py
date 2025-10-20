@@ -16,11 +16,49 @@ def parse_remaining_time(remaining_str):
 
     return timedelta(days=days, hours=hours)
 
+def is_readable_directory(path):
+    """
+    Check if the given path is a readable directory.
+
+    Args:
+        path (str): Directory path to check.
+
+    Returns:
+        bool: True if the path is a readable directory, False otherwise.
+    """
+    try:
+        if not os.path.exists(path):
+            print(f"Error: Path does not exist -> {path}", file=sys.stderr)
+            return False
+        if not os.path.isdir(path):
+            print(f"Error: Path is not a directory -> {path}", file=sys.stderr)
+            return False
+        if not os.access(path, os.R_OK):
+            print(f"Error: Directory is not readable -> {path}", file=sys.stderr)
+            return False
+        try:
+            # Attempt to list the directory to confirm readability
+            _ = os.listdir(path)
+        except Exception as e:
+            print(f"Error: Could not list directory contents -> {path}\nReason: {e}", file=sys.stderr)
+            return False
+
+        return True
+
+    except Exception as e:
+        print(f"Unexpected error while checking directory -> {path}\nReason: {e}", file=sys.stderr)
+        return False
+
 def get_ws_list_paths(min_days=8):
     """
     Ruft ws_list auf und gibt den Pfad des Workspaces mit der höchsten Nummer zurück,
     dessen Restlaufzeit mehr als min_days beträgt.
     """
+
+    directory_path = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
+    if is_readable_directory(directory_path):
+        return directory_path
+
     print("Trying to look for workspace...")
     try:
         result = subprocess.run(
