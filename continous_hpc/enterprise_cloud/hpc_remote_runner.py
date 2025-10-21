@@ -638,7 +638,7 @@ async def run_with_host(cfg: SSHConfig, local_script_dir: Path, primary_cfg: SSH
     try:
         await verify_slurm_and_key(cfg)
 
-        if args.copy:
+        if args.copy and not os.path.exists("/etc/dont_copy"):
             await rsync_scripts(cfg, local_script_dir, args.hpc_script_dir)
 
         await ensure_job_running(cfg, to_absolute(args.hpc_script_dir))
