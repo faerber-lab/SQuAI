@@ -42,6 +42,7 @@ import sys
 from pprint import pprint
 import psutil
 from typing import Union
+import getpass
 
 from beartype import beartype
 from rich.console import Console
@@ -199,7 +200,9 @@ async def rsync_scripts(
         console.print(f"[red]❌ {local_dir} is not a directory.[/red]")
         sys.exit(1)
 
-    rule("[bold]Ensuring remote directory exists[/bold]")
+    user = getpass.getuser()
+
+    console.rule(f"[bold]Ensuring remote directory exists[/bold] (running as user: {user})")
 
     mkdir_cmd = f"mkdir -p {shlex.quote(str(remote_dir))}"
     try:
@@ -635,7 +638,7 @@ async def run_with_host(cfg: SSHConfig, local_script_dir: Path, primary_cfg: SSH
     try:
         await verify_slurm_and_key(cfg)
 
-        if args.copy:
+        if args.copy and not os.path.exists("/etc/dont_copy"):
             await rsync_scripts(cfg, local_script_dir, args.hpc_script_dir)
 
         await ensure_job_running(cfg, to_absolute(args.hpc_script_dir))

@@ -130,3 +130,7 @@ For the case that you want to change where the FAISS data is stored, create a fi
 ### How to restart the service if it isn't working:
 
 `sudo systemctl restart squai-frontend.service`
+
+### Data is not being copied
+
+Check if `/etc/dont_copy` exists.
