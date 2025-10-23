@@ -13,7 +13,7 @@ app = FastAPI()
 
 # Default config values
 DEFAULT_MODEL = "tiiuae/Falcon3-10B-Instruct"
-DEFAULT_RETRIEVER = "bm25"
+DEFAULT_RETRIEVER = "hybrid"
 DEFAULT_N_VALUE = 0.5
 DEFAULT_TOP_K = 5
 DEFAULT_ALPHA = 0.65
