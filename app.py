@@ -90,10 +90,23 @@ model_choice = st.sidebar.selectbox("Language Model", ["Falcon3-10B-Instruct", "
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["bm25", "e5", "hybrid"], index=0)
 
 # Add numeric parameter inputs with defaults
-n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
-top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, step=1)
-alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
+n_value = st.sidebar.slider(
+    "N_VALUE",
+    0.0, 1.0, 0.5, step=0.01,
+    help="Controls filtering stringency: if 0, filtering is very strict; if 1, it’s very tolerant"
+)
 
+top_k = st.sidebar.number_input(
+    "TOP_K",
+    min_value=1, max_value=20, value=5, step=1,
+    help="Sets how many top documents to consider for answer generation."
+)
+
+alpha = st.sidebar.slider(
+    "ALPHA",
+    0.0, 1.0, 0.65, step=0.01,
+    help="Weighting factor that adjusts influence between e5 and bm25 retrievals (ALPHA*e5 + (1-ALPHA)*bm25)."
+)
 
 
 def get_script_dir():
