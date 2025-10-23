@@ -86,7 +86,7 @@ st.markdown("""
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-model_choice = st.sidebar.selectbox("Language Model", ["falcon-3b-10b", "Llama 3.2"], index=0)
+model_choice = st.sidebar.selectbox("Language Model", ["Falcon3-10B-Instruct", "llama3.2"], index=0)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["bm25", "e5", "hybrid"], index=0)
 
 # Add numeric parameter inputs with defaults
