@@ -193,7 +193,8 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
 </head>
 <body>
 <div class="container">
-<h1>SQuAI is currently down, since the backend cannot be reached.</h1>
+<h1>SQuAI is currently unavailable.</h1>
+<p>Currently, the backend is down. This can be for multiple reasons, the most likely one being the HPC system being unavailable. Please try again later.</p>
 """)
 
     # Get jobs via squeue (only JOBID and STATE), no header (-h)
