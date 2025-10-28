@@ -200,7 +200,6 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
     else:
         # No pending jobs found
         html_parts.append('<div class="card"><div class="header-line"><div class="status-ok">No pending jobs</div></div>')
-        html_parts.append('<div class="note">No pending jobs detected. If you expected a pending job, confirm the job is listed by running <code>squeue --me</code> on the HPC login node.</div>')
         html_parts.append("</div>")
 
     # Include other jobs (if any) as informational
