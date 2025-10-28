@@ -11,6 +11,76 @@ BACKEND_URL = "http://localhost:8500"
 PORT = 8080
 CONFIG_FILE = "defaults.ini"
 
+def ansi_to_html(text):
+    """
+    Wandelt ANSI-Farb-Codes in HTML <span> mit Farben um.
+    Unterstützt Standardfarben und fett (bold).
+    """
+    # ANSI color map
+    ansi_colors = {
+        '30': 'black',
+        '31': 'red',
+        '32': 'green',
+        '33': 'yellow',
+        '34': 'blue',
+        '35': 'magenta',
+        '36': 'cyan',
+        '37': 'white',
+        '90': 'grey',  # hellschwarz
+        '91': 'red',
+        '92': 'green',
+        '93': 'yellow',
+        '94': 'blue',
+        '95': 'magenta',
+        '96': 'cyan',
+        '97': 'white',
+    }
+
+    # ANSI regex: \x1b[<codes>m
+    ansi_regex = re.compile(r'\x1b\[([0-9;]+)m')
+
+    html_parts = []
+    open_tags = []
+
+    last_end = 0
+    for match in ansi_regex.finditer(text):
+        start, end = match.span()
+        codes = match.group(1).split(';')
+
+        # Text zwischen ANSI-Codes übernehmen
+        html_parts.append(text[last_end:start])
+        last_end = end
+
+        # Reset (0)
+        if '0' in codes:
+            while open_tags:
+                html_parts.append('</span>')
+                open_tags.pop()
+            codes.remove('0')
+
+        # bold (1)
+        style = ''
+        if '1' in codes:
+            style += 'font-weight:bold;'
+            codes.remove('1')
+
+        # Farben
+        for code in codes:
+            color = ansi_colors.get(code)
+            if color:
+                style += f'color:{color};'
+
+        if style:
+            html_parts.append(f'<span style="{style}">')
+            open_tags.append('</span>')
+
+    # Restlichen Text
+    html_parts.append(text[last_end:])
+    while open_tags:
+        html_parts.append(open_tags.pop())
+
+    return ''.join(html_parts)
+
 def read_hpc_config():
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
@@ -172,9 +242,6 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
     pending_jobs = [j for j in jobs if j["STATE"].startswith("PENDING")]
     other_jobs = [j for j in jobs if not (j["STATE"].startswith("PENDING") or j["STATE"].startswith("R"))]
 
-    import json
-    html_parts.append(f"JOB: {json.dumps(jobs)}")
-
     if pending_jobs:
         # For each pending job, run whypending and present parsed info + full output
         for j in pending_jobs:
@@ -190,15 +257,15 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
             parsed = parse_whypending(wp_stdout)
             # Show extracted fields if available
             if parsed.get("position"):
-                html_parts.append(f'<div class="kv"><span class="k">Position in queue:</span><span class="v">{html.escape(parsed["position"])}</span></div>')
+                html_parts.append(f'<div class="kv"><span class="k">Position in queue:</span><span class="v">{ansi_to_html(html.escape(parsed["position"]))}</span></div>')
             if parsed.get("estimated_start"):
-                html_parts.append(f'<div class="kv"><span class="k">Estimated start time:</span><span class="v">{html.escape(parsed["estimated_start"])}</span></div>')
+                html_parts.append(f'<div class="kv"><span class="k">Estimated start time:</span><span class="v">{ansi_to_html(html.escape(parsed["estimated_start"]))}</span></div>')
             if parsed.get("reason"):
-                html_parts.append(f'<div class="kv"><span class="k">Reason:</span><span class="v">{html.escape(parsed["reason"].splitlines()[0])}</span></div>')
+                html_parts.append(f'<div class="kv"><span class="k">Reason:</span><span class="v">{ansi_to_html(html.escape(parsed["reason"].splitlines()[0]))}</span></div>')
                 # Show reason paragraph in a small pre for detail
                 html_parts.append(f'<div class="note">Reason details below.</div>')
             # Full whypending output for completeness
-            html_parts.append(f'<pre>{html.escape(wp_stdout)}</pre>')
+            html_parts.append(f'<pre>{ansi_to_html(html.escape(wp_stdout))}</pre>')
             html_parts.append("</div>")
     else:
         # No pending jobs found
