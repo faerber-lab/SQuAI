@@ -169,8 +169,11 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
         return "".join(html_parts)
 
     # No running jobs -> handle pending and other states
-    pending_jobs = [j for j in jobs if j["STATE"].startswith("PD")]
-    other_jobs = [j for j in jobs if not (j["STATE"].startswith("PD") or j["STATE"].startswith("R"))]
+    pending_jobs = [j for j in jobs if j["STATE"].startswith("PENDING")]
+    other_jobs = [j for j in jobs if not (j["STATE"].startswith("PENDING") or j["STATE"].startswith("R"))]
+
+    import json
+    html_parts.append(f"JOB: {json.dumps(jobs)}")
 
     if pending_jobs:
         # For each pending job, run whypending and present parsed info + full output
