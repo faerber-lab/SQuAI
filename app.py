@@ -367,23 +367,39 @@ def wait_for_backend(url, timeout=60, wait_between=2):
 
         time.sleep(wait_between)
 
+def check_backend_available(url, timeout=5):
+    """Check if backend is available without retries"""
+    try:
+        response = requests.get(url, timeout=timeout)
+        return response.status_code == 200
+    except:
+        return False
+
 def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_restarts=5):
     backend_restarts = 0
 
     while backend_restarts < max_backend_restarts:
         for attempt in range(max_retries):
             try:
-                response = requests.post(url, json=payload)
+                response = requests.post(url, json=payload, timeout=30)
                 
                 # Check for 503 Service Unavailable
                 if response.status_code == 503:
-                    raise requests.exceptions.HTTPError("503 Service Unavailable", response=response)
+                    return {'status_code': 503, 'is_503': True}
                 
                 response.raise_for_status()
                 return response
+            except requests.exceptions.ConnectionError:
+                # Backend is not reachable at all - return 503
+                print(f"POST attempt {attempt+1}/{max_retries}: Connection refused")
+                if attempt == 0:  # On first attempt, immediately return 503
+                    return {'status_code': 503, 'is_503': True}
+                time.sleep(wait_between)
+            except requests.exceptions.Timeout:
+                print(f"POST attempt {attempt+1}/{max_retries}: Request timeout")
+                time.sleep(wait_between)
             except requests.exceptions.HTTPError as e:
                 if hasattr(e, 'response') and e.response is not None and e.response.status_code == 503:
-                    # Return a special marker for 503 errors
                     return {'status_code': 503, 'is_503': True}
                 print(f"POST attempt {attempt+1}/{max_retries} failed: {e}")
                 time.sleep(wait_between)
@@ -452,6 +468,13 @@ n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
 top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, step=1)
 alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
 
+# Check backend availability on page load (only once per session)
+if 'backend_check_done' not in st.session_state:
+    st.session_state.backend_check_done = True
+    if not check_backend_available("http://localhost:8000"):
+        show_503_page()
+        st.stop()
+
 # Question Form
 with st.form(key="qa_form"):
     question = st.text_input("🔎 Enter your question:")
@@ -474,12 +497,12 @@ if submit and question:
         try:
             split_response = post_with_retry(split_url, split_payload)
         except RuntimeError as e:
-            st.markdown(f"{e}")
+            st.error(f"❌ {e}")
 
     # Check if we got a 503 error
     if split_response is not None and isinstance(split_response, dict) and split_response.get('is_503'):
         show_503_page()
-    elif split_response is not None and split_response.status_code == 200:
+    elif split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
         split_data = split_response.json()
         should_split = split_data.get("should_split")
         sub_questions = split_data.get("sub_questions", [])
@@ -530,7 +553,14 @@ if submit and question:
                 "should_split": should_split,
                 "sub_questions": sub_questions
             }
-            ask_response = requests.post(ask_url, json=ask_payload)
+            try:
+                ask_response = requests.post(ask_url, json=ask_payload, timeout=120)
+            except requests.exceptions.ConnectionError:
+                show_503_page()
+                st.stop()
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+                st.stop()
 
         # Check for 503 on ask endpoint too
         if ask_response.status_code == 503:
