@@ -83,6 +83,9 @@ fi
 
 source "$VENV_ACTIVATE"
 
+nice_echo "Starting smartproxy as a background job"
+python3 smartproxy.py &
+
 nice_echo "Starting backend server as a background job"
 bash "$SCRIPT_DIR/start_backend_from_enterprise_cloud.sh" \
     --username "$USERNAME" \
