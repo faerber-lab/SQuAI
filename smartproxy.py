@@ -172,7 +172,7 @@ def generate_hpc_status_html(username, partition):
 <html>
 <head>
 <meta charset="utf-8">
-<title>HPC Status</title>
+<title>SQuAI (unavailable)</title>
 <style>
 body { background-color: #0f1113; color: #d7d7d7; font-family: Inter, Roboto, "DejaVu Sans", monospace; padding: 24px; }
 .container { max-width: 980px; margin: 0 auto; }
