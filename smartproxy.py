@@ -5,6 +5,7 @@ import threading
 import subprocess
 import configparser
 import html
+import re
 
 BACKEND_URL = "http://localhost:8500"
 PORT = 8080
@@ -15,116 +16,234 @@ def read_hpc_config():
     config.read(CONFIG_FILE)
     hpc_config = {}
     if "hpc" in config:
-        hpc_config["username"] = config["hpc"].get("username", "")
-        hpc_config["partition"] = config["hpc"].get("partition", "")
+        hpc_config["username"] = config["hpc"].get("username", "").strip()
+        hpc_config["partition"] = config["hpc"].get("partition", "").strip()
     return hpc_config
 
-def ssh_command(username, cmd):
-    """Führe SSH-Befehl aus, gib stdout und Fehler zurück"""
+def ssh_command(username, cmd, timeout=10):
+    """
+    Run an SSH command and return (stdout, error). Error is None on success.
+    """
     full_cmd = ["ssh", f"{username}@login1.capella.hpc.tu-dresden.de", cmd]
     try:
-        result = subprocess.run(full_cmd, capture_output=True, text=True, timeout=5)
+        result = subprocess.run(full_cmd, capture_output=True, text=True, timeout=timeout)
         if result.returncode != 0:
-            return None, result.stderr.strip()
+            # prefer stderr, fallback to a generic message
+            return None, result.stderr.strip() or f"Command returned code {result.returncode}"
         return result.stdout.strip(), None
+    except subprocess.TimeoutExpired as e:
+        return None, f"SSH command timed out after {timeout}s"
     except Exception as e:
         return None, str(e)
 
-def generate_hpc_status_html(username, partition):
-    """Erzeuge HTML mit HPC-Status"""
-    stdout, err = ssh_command(username, "squeue --me -o '%i %T %j %u %P %M %D %R'")
-    html_parts = []
+def parse_whypending(stdout):
+    """
+    Extract a few key pieces from whypending output:
+      - Reason paragraph (first paragraph that starts with 'Reason' or first non-empty paragraph)
+      - Position in queue
+      - Estimated start time
+    Returns a dict with keys: reason, position, estimated_start, full_text
+    """
+    result = {"reason": None, "position": None, "estimated_start": None, "full_text": stdout or ""}
+    if not stdout:
+        return result
 
-    html_parts.append("""
+    lines = stdout.splitlines()
+    # Join into paragraphs (separated by blank lines)
+    paragraphs = []
+    cur = []
+    for ln in lines:
+        if ln.strip() == "":
+            if cur:
+                paragraphs.append("\n".join(cur).strip())
+                cur = []
+        else:
+            cur.append(ln.rstrip())
+    if cur:
+        paragraphs.append("\n".join(cur).strip())
+
+    # Find paragraph starting with Reason (case-insensitive) first
+    reason_par = None
+    for p in paragraphs:
+        if p.lower().startswith("reason"):
+            reason_par = p
+            break
+    if not reason_par and paragraphs:
+        # fallback to first paragraph
+        reason_par = paragraphs[0]
+
+    if reason_par:
+        result["reason"] = reason_par
+
+    # Position in queue
+    m = re.search(r"Position in queue:\s*(\d+)", stdout, flags=re.IGNORECASE)
+    if m:
+        result["position"] = m.group(1)
+
+    # Estimated start time
+    m2 = re.search(r"Estimated start time:\s*(.*)", stdout, flags=re.IGNORECASE)
+    if m2:
+        est = m2.group(1).strip()
+        result["estimated_start"] = est if est else None
+
+    return result
+
+def generate_hpc_status_html(username, partition):
+    """
+    Generate a dark-mode HTML page with clear, English messages:
+      - SSH connection errors
+      - No jobs
+      - For each job: clear status (running / pending / other)
+      - For pending jobs: run whypending and show parsed info + full output
+    The internal squeue table is NOT shown to the user.
+    """
+    html_parts = []
+    html_parts.append("""<!doctype html>
 <html>
 <head>
+<meta charset="utf-8">
 <title>HPC Status</title>
 <style>
-body { background-color: #1e1e1e; color: #c0c0c0; font-family: monospace; padding: 20px; }
-h1, h2 { color: #ffffff; }
-pre { background-color: #2e2e2e; padding: 10px; border-radius: 6px; overflow-x: auto; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #444; padding: 6px; text-align: left; }
-th { background-color: #333; }
-tr:nth-child(even) { background-color: #2a2a2a; }
+body { background-color: #0f1113; color: #d7d7d7; font-family: Inter, Roboto, "DejaVu Sans", monospace; padding: 24px; }
+.container { max-width: 980px; margin: 0 auto; }
+h1 { color: #ffffff; margin-bottom: 8px; }
+.card { background: #111316; border: 1px solid #222427; border-radius: 8px; padding: 14px; margin-bottom: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.5); }
+.header-line { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.status-error { color: #ff6b6b; font-weight:700; }
+.status-warn { color: #ffcc66; font-weight:700; }
+.status-ok { color: #6be26b; font-weight:700; }
+.job-id { font-weight:700; color:#fff; }
+.small { font-size:0.92rem; color:#9aa0a6; }
+pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6px; overflow-x:auto; border:1px solid #1f2526; }
+.kv { margin:6px 0; }
+.k { color:#9fb3ff; font-weight:700; margin-right:8px; }
+.v { color:#d7d7d7; }
+.note { color:#aab2b6; font-size:0.92rem; margin-top:8px; }
 </style>
 </head>
 <body>
+<div class="container">
 <h1>HPC Job Status</h1>
 """)
 
+    # Get jobs via squeue (only JOBID and STATE), no header (-h)
+    stdout, err = ssh_command(username, "squeue --me -h -o '%i %T'")
     if err:
-        html_parts.append(f"<p style='color:red;'>SSH connection didn't work: {html.escape(err)}</p>")
-        html_parts.append("</body></html>")
+        html_parts.append('<div class="card"><div class="header-line"><div class="status-error">SSH connection didn\'t work</div></div>')
+        html_parts.append(f'<div class="note">Detailed error: {html.escape(err)}</div>')
+        html_parts.append("</div></div></body></html>")
         return "".join(html_parts)
 
-    if not stdout:
-        html_parts.append("<p>No jobs found for user.</p>")
-        html_parts.append("</body></html>")
+    if not stdout.strip():
+        html_parts.append('<div class="card"><div class="header-line"><div class="status-warn">No jobs found for user</div></div>')
+        html_parts.append('<div class="note">You currently have no jobs visible to <code>squeue --me</code>.</div>')
+        html_parts.append("</div></div></body></html>")
         return "".join(html_parts)
 
+    # Parse jobs list: each line -> JOBID STATE...
     jobs = []
     for line in stdout.splitlines():
-        parts = line.split(None, 7)
-        if len(parts) < 8:
+        ln = line.strip()
+        if not ln:
             continue
-        job = {
-            "JOBID": parts[0],
-            "STATE": parts[1],
-            "NAME": parts[2],
-            "USER": parts[3],
-            "PARTITION": parts[4],
-            "TIME": parts[5],
-            "NODES": parts[6],
-            "NODELIST(REASON)": parts[7],
-        }
-        jobs.append(job)
+        parts = ln.split(None, 1)
+        if len(parts) == 0:
+            continue
+        jobid = parts[0]
+        state_raw = parts[1] if len(parts) > 1 else ""
+        # Normalize: take first token of state (in case slurm adds flags), uppercase
+        state_token = state_raw.split()[0].upper() if state_raw else ""
+        jobs.append({"JOBID": jobid, "STATE_RAW": state_raw, "STATE": state_token})
 
-    # Prüfe, ob ein Job running ist
-    any_running = any(j["STATE"] == "R" for j in jobs)
-
-    # Tabelle aller Jobs
-    html_parts.append("<table><tr><th>JobID</th><th>State</th><th>Name</th><th>Partition</th><th>Time</th><th>Nodes</th><th>NodeList/Reason</th></tr>")
-    for j in jobs:
-        html_parts.append(f"<tr><td>{html.escape(j['JOBID'])}</td><td>{html.escape(j['STATE'])}</td><td>{html.escape(j['NAME'])}</td><td>{html.escape(j['PARTITION'])}</td><td>{html.escape(j['TIME'])}</td><td>{html.escape(j['NODES'])}</td><td>{html.escape(j['NODELIST(REASON)'])}</td></tr>")
-    html_parts.append("</table>")
-
+    # If any job is running (STATE startswith 'R'), show running message and stop (as requested)
+    any_running = any(j["STATE"].startswith("R") for j in jobs)
     if any_running:
-        html_parts.append("<p style='color:yellow;'>At least one job is currently running but not reachable.</p>")
+        # Find first running job(s) and list them
+        running_jobs = [j for j in jobs if j["STATE"].startswith("R")]
+        html_parts.append('<div class="card">')
+        html_parts.append('<div class="header-line"><div class="status-warn">At least one job is currently running but not reachable</div></div>')
+        html_parts.append('<div class="note">The following running job(s) were detected. The proxy will not attempt <code>whypending</code> when jobs are running.</div>')
+        for r in running_jobs:
+            html_parts.append(f'<div class="kv"><span class="k">Job</span><span class="job-id">{html.escape(r["JOBID"])}</span> <span class="small">state={html.escape(r["STATE_RAW"])}</span></div>')
+        html_parts.append("</div></div></body></html>")
+        return "".join(html_parts)
+
+    # No running jobs -> handle pending and other states
+    pending_jobs = [j for j in jobs if j["STATE"].startswith("PD")]
+    other_jobs = [j for j in jobs if not (j["STATE"].startswith("PD") or j["STATE"].startswith("R"))]
+
+    if pending_jobs:
+        # For each pending job, run whypending and present parsed info + full output
+        for j in pending_jobs:
+            jid = j["JOBID"]
+            html_parts.append('<div class="card">')
+            html_parts.append(f'<div class="header-line"><div class="status-warn">Job {html.escape(jid)} is pending</div></div>')
+            # Run whypending with a bit more timeout
+            wp_stdout, wp_err = ssh_command(username, f"whypending {jid}", timeout=20)
+            if wp_err:
+                html_parts.append(f'<div class="note status-error">Error executing <code>whypending {html.escape(jid)}</code>: {html.escape(wp_err)}</div>')
+                html_parts.append("</div>")
+                continue
+            parsed = parse_whypending(wp_stdout)
+            # Show extracted fields if available
+            if parsed.get("position"):
+                html_parts.append(f'<div class="kv"><span class="k">Position in queue:</span><span class="v">{html.escape(parsed["position"])}</span></div>')
+            if parsed.get("estimated_start"):
+                html_parts.append(f'<div class="kv"><span class="k">Estimated start time:</span><span class="v">{html.escape(parsed["estimated_start"])}</span></div>')
+            if parsed.get("reason"):
+                html_parts.append(f'<div class="kv"><span class="k">Reason:</span><span class="v">{html.escape(parsed["reason"].splitlines()[0])}</span></div>')
+                # Show reason paragraph in a small pre for detail
+                html_parts.append(f'<div class="note">Reason details below.</div>')
+            # Full whypending output for completeness
+            html_parts.append(f'<pre>{html.escape(wp_stdout)}</pre>')
+            html_parts.append("</div>")
     else:
-        # Für alle pending jobs whypending ausführen
-        for j in jobs:
-            if j["STATE"] == "PD":
-                stdout, err = ssh_command(username, f"whypending {j['JOBID']}")
-                html_parts.append(f"<h2>Job {j['JOBID']} Pending Info:</h2>")
-                if err:
-                    html_parts.append(f"<p style='color:red;'>Error executing whypending: {html.escape(err)}</p>")
-                else:
-                    html_parts.append(f"<pre>{html.escape(stdout)}</pre>")
+        # No pending jobs found
+        html_parts.append('<div class="card"><div class="header-line"><div class="status-ok">No pending jobs</div></div>')
+        html_parts.append('<div class="note">No pending jobs detected. If you expected a pending job, confirm the job is listed by running <code>squeue --me</code> on the HPC login node.</div>')
+        html_parts.append("</div>")
 
-    html_parts.append("</body></html>")
+    # Include other jobs (if any) as informational
+    if other_jobs:
+        html_parts.append('<div class="card">')
+        html_parts.append('<div class="header-line"><div class="small">Other job states detected:</div></div>')
+        for o in other_jobs:
+            html_parts.append(f'<div class="kv"><span class="k">Job</span><span class="job-id">{html.escape(o["JOBID"])}</span> <span class="small">state={html.escape(o["STATE_RAW"])}</span></div>')
+        html_parts.append("</div>")
+
+    html_parts.append("</div></body></html>")
     return "".join(html_parts)
-
 
 class ProxyHandler(BaseHTTPRequestHandler):
     def _proxy_request(self):
-        """Versuch, Backend zu erreichen, sonst HPC Status anzeigen"""
         try:
             backend_resp = requests.get(f"{BACKEND_URL}{self.path}", timeout=2)
             self.send_response(backend_resp.status_code)
+            # copy headers except transfer-encoding
             for k, v in backend_resp.headers.items():
                 if k.lower() != "transfer-encoding":
                     self.send_header(k, v)
             self.end_headers()
-            self.wfile.write(backend_resp.content)
+            # write body
+            if backend_resp.content:
+                try:
+                    self.wfile.write(backend_resp.content)
+                except BrokenPipeError:
+                    # client disconnected
+                    pass
         except requests.exceptions.RequestException:
-            # Backend offline → HPC Status
             hpc_config = read_hpc_config()
-            html_content = generate_hpc_status_html(hpc_config.get("username", ""), hpc_config.get("partition", ""))
+            username = hpc_config.get("username", "")
+            partition = hpc_config.get("partition", "")
+            html_content = generate_hpc_status_html(username, partition)
             self.send_response(503)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(html_content.encode("utf-8"))))
             self.end_headers()
-            self.wfile.write(html_content.encode("utf-8"))
+            try:
+                self.wfile.write(html_content.encode("utf-8"))
+            except BrokenPipeError:
+                pass
 
     def do_GET(self):
         self._proxy_request()
@@ -139,21 +258,29 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 if k.lower() != "transfer-encoding":
                     self.send_header(k, v)
             self.end_headers()
-            self.wfile.write(backend_resp.content)
+            if backend_resp.content:
+                try:
+                    self.wfile.write(backend_resp.content)
+                except BrokenPipeError:
+                    pass
         except requests.exceptions.RequestException:
             hpc_config = read_hpc_config()
-            html_content = generate_hpc_status_html(hpc_config.get("username", ""), hpc_config.get("partition", ""))
+            username = hpc_config.get("username", "")
+            partition = hpc_config.get("partition", "")
+            html_content = generate_hpc_status_html(username, partition)
             self.send_response(503)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(html_content.encode("utf-8"))))
             self.end_headers()
-            self.wfile.write(html_content.encode("utf-8"))
-
+            try:
+                self.wfile.write(html_content.encode("utf-8"))
+            except BrokenPipeError:
+                pass
 
 def run_server():
     server = HTTPServer(('127.0.0.1', PORT), ProxyHandler)
     print(f"Smart proxy running on http://127.0.0.1:{PORT}")
     server.serve_forever()
-
 
 if __name__ == "__main__":
     server_thread = threading.Thread(target=run_server, daemon=True)
