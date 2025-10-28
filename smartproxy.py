@@ -193,7 +193,7 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
 </head>
 <body>
 <div class="container">
-<h1>HPC Job Status</h1>
+<h1>SQuAI is currently down, since the backend cannot be reached.</h1>
 """)
 
     # Get jobs via squeue (only JOBID and STATE), no header (-h)
@@ -280,7 +280,45 @@ pre { background-color: #0b0d0e; color: #d6d6d6; padding: 12px; border-radius: 6
             html_parts.append(f'<div class="kv"><span class="k">Job</span><span class="job-id">{html.escape(o["JOBID"])}</span> <span class="small">state={html.escape(o["STATE_RAW"])}</span></div>')
         html_parts.append("</div>")
 
-    html_parts.append("</div></body></html>")
+    html_parts.append("""
+    </div>
+    <style>
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1e1e1e; /* dunkler Hintergrund */
+            color: #f0f0f0; /* heller Text */
+            text-align: center;
+            padding: 10px 0;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+        }
+        .footer a {
+            color: #f0f0f0;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        body {
+            margin-bottom: 50px; /* Platz für Footer */
+            background-color: #121212; /* Dark Mode Hintergrund */
+            color: #f0f0f0;
+        }
+    </style>
+    <div class='footer'>
+        <a href='https://scads.ai/imprint/' target='_blank'>Impressum</a>
+        <a href='https://scads.ai/privacy/' target='_blank'>Datenschutzerklärung</a>
+        <a href='https://scads.ai/accessibility/' target='_blank'>Barrierefreiheit</a>
+    </div>
+    </body>
+    </html>
+    """)
+
     return "".join(html_parts)
 
 class ProxyHandler(BaseHTTPRequestHandler):
