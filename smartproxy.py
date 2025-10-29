@@ -328,17 +328,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
             backend_resp = requests.get(f"{BACKEND_URL}{self.path}", timeout=2)
             self.send_response(backend_resp.status_code)
             # copy headers except transfer-encoding
+            body = backend_resp.content
+            self.send_response(backend_resp.status_code)
             for k, v in backend_resp.headers.items():
-                if k.lower() != "transfer-encoding":
+                if k.lower() not in ["transfer-encoding", "content-encoding", "content-length"]:
                     self.send_header(k, v)
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            # write body
-            if backend_resp.content:
-                try:
-                    self.wfile.write(backend_resp.content)
-                except BrokenPipeError:
-                    # client disconnected
-                    pass
+            self.wfile.write(body)
         except requests.exceptions.RequestException:
             hpc_config = read_hpc_config()
             username = hpc_config.get("username", "")
@@ -362,15 +359,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length) if content_length > 0 else None
             backend_resp = requests.post(f"{BACKEND_URL}{self.path}", data=post_data, headers=self.headers, timeout=5)
             self.send_response(backend_resp.status_code)
+            body = backend_resp.content
+            self.send_response(backend_resp.status_code)
             for k, v in backend_resp.headers.items():
-                if k.lower() != "transfer-encoding":
+                if k.lower() not in ["transfer-encoding", "content-encoding", "content-length"]:
                     self.send_header(k, v)
+            self.send_header("Content-Length", str(len(body)))
             self.end_headers()
-            if backend_resp.content:
-                try:
-                    self.wfile.write(backend_resp.content)
-                except BrokenPipeError:
-                    pass
+            self.wfile.write(body)
         except requests.exceptions.RequestException:
             hpc_config = read_hpc_config()
             username = hpc_config.get("username", "")
