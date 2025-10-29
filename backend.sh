@@ -9,6 +9,8 @@
 #SBATCH --time=32:00:00
 #SBATCH --output=logs/fastapi_%j.log
 
+echo "running as $USER (uid=$(id -u)) and $(id -gn) (gid=$(id -g))"
+
 get_slurm_script () {
 	if command -v scontrol >/dev/null 2>&1; then
 		local logfile
