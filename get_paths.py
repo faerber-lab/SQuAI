@@ -55,9 +55,9 @@ def get_ws_list_paths(min_days=8):
     dessen Restlaufzeit mehr als min_days beträgt.
     """
 
-    directory_path = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
-    if is_readable_directory(directory_path):
-        return directory_path
+    #directory_path = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
+    #if is_readable_directory(directory_path):
+    #    return directory_path
 
     print("Trying to look for workspace...")
     try:
