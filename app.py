@@ -469,11 +469,11 @@ top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, ste
 alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
 
 # Check backend availability on page load (only once per session)
-if 'backend_check_done' not in st.session_state:
-    st.session_state.backend_check_done = True
-    if not check_backend_available("http://localhost:8000"):
-        show_503_page()
-        st.stop()
+#if 'backend_check_done' not in st.session_state:
+#    st.session_state.backend_check_done = True
+#    if not check_backend_available("http://localhost:8000"):
+#        show_503_page()
+#        st.stop()
 
 # Question Form
 with st.form(key="qa_form"):
