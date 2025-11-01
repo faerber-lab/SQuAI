@@ -461,12 +461,26 @@ st.markdown("""
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-model_choice = st.sidebar.selectbox("Language Model", ["falcon-3b-10b", "Llama 3.2"], index=0)
+model_choice = st.sidebar.selectbox("Language Model", ["Falcon3-10B-Instruct", "llama3.2"], index=0)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["bm25", "e5", "hybrid"], index=0)
 
-n_value = st.sidebar.slider("N_VALUE", 0.0, 1.0, 0.5, step=0.01)
-top_k = st.sidebar.number_input("TOP_K", min_value=1, max_value=20, value=5, step=1)
-alpha = st.sidebar.slider("ALPHA", 0.0, 1.0, 0.65, step=0.01)
+n_value = st.sidebar.slider(
+    "N_VALUE",
+    0.0, 1.0, 0.5, step=0.01,
+    help="Controls document filtering stringency: if 0, filtering is very strict; if 1, it’s very tolerant."
+)
+
+top_k = st.sidebar.number_input(
+    "TOP_K",
+    min_value=1, max_value=20, value=5, step=1,
+    help="Determines how many of the top-ranked documents are considered for answer generation."
+)
+
+alpha = st.sidebar.slider(
+    "ALPHA",
+    0.0, 1.0, 0.65, step=0.01,
+    help="A weighting factor that balances the influence between E5 and BM25 retrieval methods, calculated as Alpha × E5)+ (1 − Alpha) × BM25."
+)
 
 # Check backend availability on page load (only once per session)
 #if 'backend_check_done' not in st.session_state:
