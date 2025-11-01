@@ -8,9 +8,12 @@ CYAN=$(tput setaf 6)
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
+DEFAULT_USER=$(grep '^username' "$(cd "$(dirname "$0")" && pwd)/defaults.ini" | sed -e 's#.*=##')
+DEFAULT_PARTITION=$(grep '^partition' "$(cd "$(dirname "$0")" && pwd)/defaults.ini" | sed -e 's#.*=##')
+
 # Parameter
-USERNAME=${1:-squai}
-PARTITION=${2:-capella}
+USERNAME=${1:-$DEFAULT_USER}
+PARTITION=${2:-$DEFAULT_PARTITION}
 NUM_DAYS=${3:-100}
 
 echo "${CYAN}${BOLD}Using:${RESET} USER=$USERNAME PARTITION=$PARTITION"

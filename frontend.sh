@@ -9,8 +9,11 @@ VENV_DIR=$HOME/.squai_env_frontend
 VENV_ACTIVATE=$VENV_DIR/bin/activate
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-USERNAME="squai"
-CLUSTER="capella"
+DEFAULT_USER=$(grep '^username' "$(cd "$(dirname "$0")" && pwd)/defaults.ini" | sed -e 's#.*=##')
+DEFAULT_PARTITION=$(grep '^partition' "$(cd "$(dirname "$0")" && pwd)/defaults.ini" | sed -e 's#.*=##')
+
+USERNAME=$DEFAULT_USER
+CLUSTER=$DEFAULT_PARTITION
 HPC_URL=""
 LOCAL_PORT="8000"
 WEBSERVER_PORT="8500"
@@ -79,6 +82,9 @@ if [[ ! -d $VENV_DIR ]] || [[ ! -e $VENV_ACTIVATE ]]; then
 fi
 
 source "$VENV_ACTIVATE"
+
+nice_echo "Starting smartproxy as a background job"
+python3 smartproxy.py &
 
 nice_echo "Starting backend server as a background job"
 bash "$SCRIPT_DIR/start_backend_from_enterprise_cloud.sh" \
