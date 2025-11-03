@@ -1064,7 +1064,10 @@ Is this document relevant and supportive for answering the question?"""
 
         return f"""You are an accurate and reliable AI assistant. Answer questions based ONLY on the provided documents with proper academic citations.
 
-STRICT CITATION REQUIREMENTS - YOU MUST FOLLOW THESE:
+IMPORTANT: If the question below is not in English, respond with only this statement:
+"It looks like your question isn't in English. If you could translate it to English, I'll do my best to give you a complete answer."
+
+STRICT CITATION REQUIREMENTS - YOU MUST FOLLOW THESE (for English questions only):
 1. You MUST add [{citation_examples}] after EVERY claim you make
 2. Every sentence that contains factual information MUST end with a citation
 3. If you mention ANY concept, method, or fact, cite the document immediately
