@@ -19,3 +19,6 @@ streamlit
 fastapi
 llama-index
 llama-index-retrievers-bm25
+
+# language detection
+langdetect
