@@ -134,3 +134,21 @@ For the case that you want to change where the FAISS data is stored, create a fi
 ### Data is not being copied
 
 Check if `/etc/dont_copy` exists.
+
+### Citation
+
+If you use this repository, please cite:
+
+```bibtex
+@inproceedings{Besrour2025SQuAI,
+author = {Besrour, Ines and He, Jingbo and Schreieder, Tobias and F\"{a}rber, Michael},
+title = {SQuAI: Scientific Question-Answering with Multi-Agent Retrieval-Augmented Generation},
+year = {2025},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+doi = {10.1145/3746252.3761471},
+booktitle = {Proceedings of the 34th ACM International Conference on Information and Knowledge Management},
+pages = {6603–6608},
+location = {Seoul, Republic of Korea},
+series = {CIKM '25}
+}
