@@ -945,14 +945,14 @@ Is this document relevant and supportive for answering the question?"""
         # Dynamic context allocation - top + bottom extraction approach
         if was_split:
             # Conservative: Target ~4K total per paper
-            top_chars = 2500  # Top of paper (title, abstract, intro start)
-            bottom_chars = 1500  # Bottom of paper (conclusion, results)
+            top_chars = 10000  # Top of paper (title, abstract, intro start)
+            bottom_chars = 6000  # Bottom of paper (conclusion, results)
             strategy = "CONSERVATIVE (split questions)"
             target_per_paper = "~4K"
         else:
             # Generous: Target ~8K total per paper
-            top_chars = 5000  # More from top (title, abstract, intro)
-            bottom_chars = 3000  # More from bottom (conclusion, results)
+            top_chars = 20000  # More from top (title, abstract, intro)
+            bottom_chars = 12000  # More from bottom (conclusion, results)
             strategy = "GENEROUS (single question)"
             target_per_paper = "~8K"
 
@@ -1717,7 +1717,8 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                args.single_question
+                # args.single_question (uncomment this line when running it locally)
+                query
             )
             cited_answer, references, debug_info = ragent.answer_query(args.single_question, db, should_split, sub_questions)
             process_time = time.time() - start_time
@@ -1788,7 +1789,8 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                item["question"]
+                # item["question"] (uncomment this line when running it locally)
+                query
             )
             cited_answer, references, debug_info = ragent.answer_query(item["question"], db, should_split, sub_questions)
             process_time = time.time() - start_time
