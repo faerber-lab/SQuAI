@@ -170,21 +170,21 @@ class E5DirectRetriever:
         logger.info(f"  Next run will load cache directly, taking only a few seconds!")
     
     def _load_model(self):
-        """load and optimize E5 model"""
+        """Load and optimize E5 model, using GPU if available and enabled."""
+        from config import USE_GPU
         logger.info(f"Loading E5 model: {self.model_name}")
-        self.model = SentenceTransformer(self.model_name)
-        
-        if torch.cuda.is_available():
-            self.model = self.model.cuda()
-            logger.info("✓ E5 model running on GPU")
-            self.device = 'cuda'
+
+        if USE_GPU and torch.cuda.is_available():
+            self.model = SentenceTransformer(self.model_name, device="cuda")
+            self.device = "cuda"
+            logger.info("E5 model running on GPU")
         else:
-            self.model = self.model.cpu()
-            logger.info("⚠ E5 model running on CPU (slower)")
-            self.device = 'cpu'
-        
+            self.model = SentenceTransformer(self.model_name, device="cpu")
+            self.device = "cpu"
+            logger.info("E5 model running on CPU")
+
         self.model.eval()
-        
+
         with torch.no_grad():
             _ = self.model.encode("warmup", convert_to_numpy=True, show_progress_bar=False)
     

@@ -1,9 +1,11 @@
 wheel
+# torch CPU-only (no CUDA kernels needed)
 torch>=2.0.0
 transformers>=4.30.0
 numpy>=1.24.0
 tqdm>=4.65.0
-faiss-cpu>=1.7.4  # or faiss-gpu for GPU support
+# faiss-cpu is sufficient; no need for faiss-gpu
+faiss-cpu>=1.7.4
 sentence-transformers>=2.2.2
 datasets>=2.12.0
 rouge>=1.0.1
@@ -22,3 +24,6 @@ llama-index-retrievers-bm25
 
 # language detection
 langdetect
+
+# SCADS AI API client (OpenAI-compatible)
+openai>=1.30.0

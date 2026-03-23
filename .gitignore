@@ -21,14 +21,12 @@ wheels/
 *.egg
 MANIFEST
 
-# PyCharm/IntelliJ
+# IDE
 .idea/
 *.iml
 *.iws
 *.ipr
 .idea_modules/
-
-# VS Code
 .vscode/
 *.code-workspace
 .history/
@@ -42,21 +40,7 @@ env/
 ENV/
 .env/
 .venv/
-
-# Distribution / packaging
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-
-# Data files
-data/documents/*
-data/benchmarks/*
-!data/documents/.gitkeep
-!data/benchmarks/.gitkeep
+*_env/
 
 # Model files
 *.ckpt
@@ -66,8 +50,6 @@ data/benchmarks/*
 *.h5
 *.model
 *.pkl
-*.out
-*.sh
 
 # FAISS indexes
 *.faiss
@@ -76,13 +58,14 @@ data/benchmarks/*
 # Logs
 logs/
 *.log
+*.out
 runs/
 
 # Results
 results/*
 !results/.gitkeep
 
-# Large files (adjust as needed)
+# Large files
 *.zip
 *.tar.gz
 *.7z
@@ -94,9 +77,13 @@ results/*
 *.swo
 *~
 .nfs*
-*.txt
+
+# Project-specific
 split_questions/
 C_split_questions/questions_split_*.jsonl
 local_db/
-
-*_env/
+backup/
+data/documents/*
+data/benchmarks/*
+!data/documents/.gitkeep
+!data/benchmarks/.gitkeep
