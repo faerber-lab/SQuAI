@@ -11,11 +11,15 @@ from typing import Optional, List
 # Import language detection library
 from langdetect import detect, LangDetectException
 
+# SCADS AI agent (CPU deployment – no local GPU required)
+from scads_agent import ScadsAgent
+
 
 app = FastAPI()
 
 # Default config values
-DEFAULT_MODEL = "tiiuae/Falcon3-10B-Instruct"
+# Model is served via SCADS AI API; set SCADS_MODEL env var to override.
+DEFAULT_MODEL = os.environ.get("SCADS_MODEL", "meta-llama/Llama-4-Scout-17B-16E-Instruct")
 DEFAULT_RETRIEVER = "hybrid"
 DEFAULT_N_VALUE = 0.5
 DEFAULT_TOP_K = 5
@@ -60,9 +64,11 @@ def startup_event():
             top_k=DEFAULT_TOP_K,
             alpha=DEFAULT_ALPHA,
         )
+        # Instantiate SCADS AI agent (reads SCADS_API_KEY from environment)
+        scads_agent = ScadsAgent(model=DEFAULT_MODEL)
         ragent = Enhanced4AgentRAG(
             retriever=retriever,
-            agent_model=DEFAULT_MODEL,
+            agent_model=scads_agent,  # pass pre-built agent object
             n=DEFAULT_N_VALUE,
             index_dir=BM25_INDEX_DIR,
             max_workers=6,

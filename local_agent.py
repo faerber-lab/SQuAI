@@ -47,20 +47,22 @@ class LLMAgent:
 
         # Load model with optimizations
         print("Loading model...")
+        # Use explicit device map – "cpu" for CPU-only deployments
+        device_map = "cpu" if device == "cpu" else "auto"
         if token:
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 torch_dtype=torch_dtype,
-                device_map="auto",  # Automatically optimize GPU usage
-                trust_remote_code=True,  # Required for some models
+                device_map=device_map,
+                trust_remote_code=True,
                 use_auth_token=token,
             )
         else:
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_name,
                 torch_dtype=torch_dtype,
-                device_map="auto",  # Automatically optimize GPU usage
-                trust_remote_code=True,  # Required for some models
+                device_map=device_map,
+                trust_remote_code=True,
             )
 
         # Save device information

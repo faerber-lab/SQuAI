@@ -824,7 +824,7 @@ class Enhanced4AgentRAG:
         falcon_api_key=None,
         index_dir="test_index",
         max_workers=4,
-        max_context_chars=35000,
+        max_context_chars=200000,
     ):
         """Initialize with enhanced 4-agent architecture and context management"""
 
@@ -832,7 +832,7 @@ class Enhanced4AgentRAG:
         self.n = n
         self.index_dir = index_dir
         self.max_workers = max_workers
-        self.max_context_chars = max_context_chars  # Conservative limit for Falcon-10B
+        self.max_context_chars = max_context_chars  # ~50K tokens, suitable for Llama-4-Scout
 
         logger.info(f"Context limit set to {max_context_chars} characters")
 
@@ -846,14 +846,27 @@ class Enhanced4AgentRAG:
                 self.agent3 = FalconAgent(falcon_api_key)  # Document Evaluator
                 self.agent4 = FalconAgent(falcon_api_key)  # Final Answer Generator
                 logger.info("Using Falcon agents with API for all four agent roles")
+            elif os.environ.get("SCADS_API_KEY"):
+                # Use SCADS AI API for all agents (CPU-friendly, no local GPU needed)
+                from scads_agent import ScadsAgent
+
+                agent = ScadsAgent(model=agent_model)
+                self.agent1 = agent
+                self.agent2 = agent
+                self.agent3 = agent
+                self.agent4 = agent
+                logger.info(f"Using ScadsAgent with model {agent_model} for all four agent roles")
             else:
                 from local_agent import LLMAgent
+                from config import USE_GPU
 
-                self.agent1 = LLMAgent(agent_model)  # Question Splitter
-                self.agent2 = LLMAgent(agent_model)  # Answer Generator
-                self.agent3 = LLMAgent(agent_model)  # Document Evaluator
-                self.agent4 = LLMAgent(agent_model)  # Final Answer Generator
-                logger.info(f"Using local LLM agents with model {agent_model}")
+                device = "cuda" if USE_GPU else "cpu"
+                precision = "bfloat16" if USE_GPU else "float32"
+                self.agent1 = LLMAgent(agent_model, device=device, precision=precision)  # Question Splitter
+                self.agent2 = LLMAgent(agent_model, device=device, precision=precision)  # Answer Generator
+                self.agent3 = LLMAgent(agent_model, device=device, precision=precision)  # Document Evaluator
+                self.agent4 = LLMAgent(agent_model, device=device, precision=precision)  # Final Answer Generator
+                logger.info(f"Using local LLM agents ({device}) with model {agent_model}")
         else:
             self.agent1 = agent_model  # Question Splitter
             self.agent2 = agent_model  # Answer Generator
@@ -932,14 +945,14 @@ Is this document relevant and supportive for answering the question?"""
         # Dynamic context allocation - top + bottom extraction approach
         if was_split:
             # Conservative: Target ~4K total per paper
-            top_chars = 2500  # Top of paper (title, abstract, intro start)
-            bottom_chars = 1500  # Bottom of paper (conclusion, results)
+            top_chars = 10000  # Top of paper (title, abstract, intro start)
+            bottom_chars = 6000  # Bottom of paper (conclusion, results)
             strategy = "CONSERVATIVE (split questions)"
             target_per_paper = "~4K"
         else:
             # Generous: Target ~8K total per paper
-            top_chars = 5000  # More from top (title, abstract, intro)
-            bottom_chars = 3000  # More from bottom (conclusion, results)
+            top_chars = 20000  # More from top (title, abstract, intro)
+            bottom_chars = 12000  # More from bottom (conclusion, results)
             strategy = "GENEROUS (single question)"
             target_per_paper = "~8K"
 
@@ -1598,8 +1611,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="tiiuae/Falcon3-10B-Instruct",
-        help="Model for LLM agents",
+        default=os.environ.get("SCADS_MODEL", "meta-llama/Llama-4-Scout-17B-16E-Instruct"),
+        help="Model for LLM agents (default: SCADS_MODEL env var or Llama-4-Scout)",
     )
     parser.add_argument(
         "--n", type=float, default=0.5, help="Adjustment factor for adaptive judge bar"
@@ -1704,6 +1717,7 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
+                # args.single_question (uncomment this line when running it locally)
                 query
             )
             cited_answer, references, debug_info = ragent.answer_query(args.single_question, db, should_split, sub_questions)
@@ -1775,6 +1789,7 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
+                # item["question"] (uncomment this line when running it locally)
                 query
             )
             cited_answer, references, debug_info = ragent.answer_query(item["question"], db, should_split, sub_questions)

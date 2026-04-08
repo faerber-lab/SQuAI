@@ -1,13 +1,16 @@
 #!/bin/bash
 
-#SBATCH --job-name=squai_fastapi_backend
+#SBATCH --job-name=squai_fastapi_backend_cpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=6
-#SBATCH --mem=128G
-#SBATCH --gres=gpu:2
+#SBATCH --mem=64G
 #SBATCH --time=32:00:00
-#SBATCH --output=logs/fastapi_%j.log
+#SBATCH --output=logs/fastapi_cpu_%j.log
+
+# --- CPU demo deployment (no GPU) ---
+# TODO: set your SCADS API key here (ask IT support for the key)
+# export SCADS_API_KEY="your_key_here"
 
 echo "running as $USER (uid=$(id -u)) and $(id -gn) (gid=$(id -g))"
 
@@ -38,7 +41,7 @@ VENV_ACTIVATE=$VENV_DIR/bin/activate
 SCRIPT_DIR=$(dirname $(realpath "$0"))
 
 if [[ ! -z $SLURM_JOB_ID ]]; then
-	SCRIPT_DIR=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}' | sed -e 's#backend.sh##')
+	SCRIPT_DIR=$(scontrol show job "$SLURM_JOB_ID" | awk -F= '/Command=/{print $2}' | sed -e 's#backend_cpu.sh##')
 
 	nice_echo "Loading modules"
 	module load release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
@@ -64,9 +67,7 @@ cd $SCRIPT_DIR
 nice_echo "Creating log dir $SCRIPT_DIR"
 mkdir -p logs
 
-export USE_GPU=1
-
-nice_echo "Launch FastAPI with uvicorn (GPU mode)"
+nice_echo "Launch FastAPI with uvicorn (CPU mode)"
 uvicorn_port=8000 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
 
 nice_echo "Launch main server on port 8501, broadcasting to 0.0.0.0"

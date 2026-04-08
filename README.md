@@ -7,17 +7,18 @@ Link to: [Demo Video](https://www.youtube.com/watch?v=aGDrtsiZDQA&feature=youtu.
 ### Requirements
 - Python 3.8+
 - PyTorch 2.0.0+
-- CUDA-compatible GPU 
+- **GPU deployment**: CUDA-compatible GPU (optional)
+- **CPU deployment** (demo): No GPU required; uses the ScaDS.AI API for LLM inference
 
 ### Installation
 
-0. Load Module for Swig
+0. Load modules (HPC environment):
 
 ```bash
 ml release/24.04 GCC/12.3.0 OpenMPI/4.1.5 PyTorch/2.1.2
 ```
 
-1. Install libleveldb-dev
+1. Install libleveldb-dev:
 
 ```bash
 sudo apt-get install libleveldb-dev
@@ -30,28 +31,62 @@ cd SQuAI
 ```
 
 3. Create and activate a virtual environment:
-```python
+```bash
 python -m venv env
 source env/bin/activate  # On Windows, use: env\Scripts\activate
 ```
 
 4. Install dependencies:
-```python
+```bash
 pip install -r requirements.txt
 ```
 
 ### Running SQuAI
-SQuAI can be run on a single question or a batch of questions from a JSON/JSONL file.
-#### Process a Single Question
+
+SQuAI supports two deployment modes controlled by environment variables:
+
+#### Deployment Modes
+
+| Mode | Environment Variables | Slurm Script | Description |
+|------|----------------------|--------------|-------------|
+| **CPU + API** (demo) | `SCADS_API_KEY=<key>` | `sbatch backend_cpu.sh` | No GPU needed; LLM inference via ScaDS.AI API |
+| **GPU + local model** | `USE_GPU=1` | `sbatch backend.sh` | Uses local GPU for both retrieval and LLM inference |
+
+#### CPU Demo Deployment (default)
+
+No GPU resources required. LLM inference is handled by the ScaDS.AI API:
+
 ```bash
-python run_SQuAI.py --model tiiuae/Falcon3-10B-Instruct --n 0.5 --alpha 0.65 --top_k 20 --single_question "Your question here?"
+export SCADS_API_KEY="your_key_here"
+# Optional: override the default model
+# export SCADS_MODEL="meta-llama/Llama-4-Scout-17B-16E-Instruct"
+sbatch backend_cpu.sh
 ```
-#### Process Questions from a Dataset
+
+#### GPU Deployment
+
+Requires CUDA-compatible GPUs. Runs a local LLM for inference:
+
 ```bash
-python run_SQuAI.py --model tiiuae/Falcon3-10B-Instruct --n 0.5 --alpha 0.65 --top_k 20 --data_file your_questions.jsonl --output_format jsonl
+export USE_GPU=1
+sbatch backend.sh
 ```
+
+#### Command-Line Usage
+
+SQuAI can also be run directly on a single question or a batch of questions:
+
+##### Process a Single Question
+```bash
+python run_SQuAI.py --model meta-llama/Llama-4-Scout-17B-16E-Instruct --n 0.5 --alpha 0.65 --top_k 20 --single_question "Your question here?"
+```
+##### Process Questions from a Dataset
+```bash
+python run_SQuAI.py --model meta-llama/Llama-4-Scout-17B-16E-Instruct --n 0.5 --alpha 0.65 --top_k 20 --data_file your_questions.jsonl --output_format jsonl
+```
+
 #### Parameters
-- `--model`: Model name or path (default: "tiiuae/falcon-3-10b-instruct")
+- `--model`: Model name or path (default: `SCADS_MODEL` env var or `meta-llama/Llama-4-Scout-17B-16E-Instruct`)
 - `--n`: Adjustment factor for adaptive judge bar (default: 0.5)
 - `--alpha`: Weight for semantic search vs. keyword search (0-1, default: 0.65)
 - `--top_k`: Number of documents to retrieve (default: 20)

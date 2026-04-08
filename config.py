@@ -1,3 +1,4 @@
+import os
 import torch
 from get_paths import get_main_data_dir
 
@@ -6,7 +7,8 @@ MAIN_DATA_DIR = get_main_data_dir()
 EMBEDDING_MODEL = "intfloat/e5-large-v2"
 MODEL_FORMAT = "sentence_transformers"
 EMBEDDING_DIM = 1024
-USE_GPU = torch.cuda.is_available()
+# Default: CPU for demo deployment. Set USE_GPU=1 to enable GPU when available.
+USE_GPU = os.environ.get("USE_GPU", "0") == "1" and torch.cuda.is_available()
 
 # Configuration paths
 DATA_DIR = f"{MAIN_DATA_DIR}_extended_data"
