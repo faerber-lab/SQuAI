@@ -461,7 +461,16 @@ st.markdown("""
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-model_choice = st.sidebar.selectbox("Language Model", ["Falcon3-10B-Instruct"], index=0)
+AVAILABLE_MODELS = [
+    "meta-llama/Llama-3.3-70B-Instruct",
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "moonshotai/Kimi-K2.5",
+    "openai/gpt-oss-120b",
+    "MiniMaxAI/MiniMax-M2.5",
+    "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    "Qwen/Qwen3-VL-8B-Instruct",
+]
+model_choice = st.sidebar.selectbox("Language Model", AVAILABLE_MODELS, index=0)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["Hybrid","bm25", "e5"], index=0)
 
 n_value = st.sidebar.slider(

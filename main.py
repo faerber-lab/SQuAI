@@ -48,6 +48,14 @@ def detect_language(text: str) -> str:
 # Global objects
 db = None
 ragent = None
+_scads_agents = {}  # cache: model_name -> ScadsAgent
+
+
+def _get_scads_agent(model: str) -> "ScadsAgent":
+    """Return a cached ScadsAgent for the given model, creating one if needed."""
+    if model not in _scads_agents:
+        _scads_agents[model] = ScadsAgent(model=model)
+    return _scads_agents[model]
 
 
 @app.on_event("startup")
@@ -65,7 +73,7 @@ def startup_event():
             alpha=DEFAULT_ALPHA,
         )
         # Instantiate SCADS AI agent (reads SCADS_API_KEY from environment)
-        scads_agent = ScadsAgent(model=DEFAULT_MODEL)
+        scads_agent = _get_scads_agent(DEFAULT_MODEL)
         ragent = Enhanced4AgentRAG(
             retriever=retriever,
             agent_model=scads_agent,  # pass pre-built agent object
@@ -107,11 +115,21 @@ class QueryRequest(BaseModel):
     alpha: Optional[float] = DEFAULT_ALPHA
 
 
+def _swap_agents_if_needed(model: str):
+    """Switch ragent's underlying LLM agents to the requested model."""
+    agent = _get_scads_agent(model)
+    ragent.agent1 = agent
+    ragent.agent2 = agent
+    ragent.agent3 = agent
+    ragent.agent4 = agent
+    ragent.question_splitter.agent = agent
+
+
 @app.post("/split")
 def split_question(req: QueryRequest):
     # Detect query language
     detected_lang = detect_language(req.question)
-    
+
     if detected_lang != "en":
         # Non-English query, return marker for frontend
         return {
@@ -121,7 +139,10 @@ def split_question(req: QueryRequest):
             "detected_language": detected_lang,
             "is_non_english": True
         }
-    
+
+    # Switch to the requested model if different from current
+    _swap_agents_if_needed(req.model)
+
     # English query, proceed with normal split logic
     should_split, sub_questions = ragent.question_splitter.analyze_and_split(
         req.question
@@ -157,8 +178,11 @@ def ask_question(req: QueryRequest):
                 "total_citations": 0
             }
         }
-    
-    # English query, proceed with normal RAG pipeline (code unchanged)
+
+    # Switch to the requested model if different from current
+    _swap_agents_if_needed(req.model)
+
+    # English query, proceed with normal RAG pipeline
     result, references, debug_info = ragent.answer_query(
         req.question, db, should_split=req.should_split, sub_questions=req.sub_questions
     )
