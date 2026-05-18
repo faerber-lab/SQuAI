@@ -450,17 +450,39 @@ class PaperTitleExtractor:
 class EnhancedCitationHandler:
     """Enhanced citation handler with proper metadata extraction and context passages"""
 
+    # Class-level cache: resolved index_dir -> {paper_id: metadata}.
+    # The arXiv metadata is read-only and identical across queries, so we parse
+    # the (potentially multi-GB) JSONL files at most once per process. Without
+    # this, every call to answer_query was re-parsing them, costing ~82s/query
+    # on the demo (BM25_INDEX_DIR contains a 7.5 GB corpus.jsonl).
+    _arxiv_papers_cache: Dict[str, Dict] = {}
+
     def __init__(self, index_dir: str = "test_index"):
         self.doc_to_citation = {}
         self.citation_to_doc = {}
         self.next_citation_num = 1
         self.index_dir = Path(index_dir)
 
-        # Load arXiv papers for better metadata
-        self.arxiv_papers = self._load_arxiv_papers()
+        # Load arXiv papers for better metadata (cached across instances)
+        self.arxiv_papers = self._get_or_load_arxiv_papers()
 
         # Connect to metadata database
         self.metadata_db = self._connect_metadata_db()
+
+    def _get_or_load_arxiv_papers(self):
+        try:
+            key = str(self.index_dir.resolve())
+        except Exception:
+            key = str(self.index_dir)
+        cache = EnhancedCitationHandler._arxiv_papers_cache
+        if key not in cache:
+            t0 = time.time()
+            cache[key] = self._load_arxiv_papers()
+            logger.info(
+                f"Loaded arxiv_papers metadata from {key}: "
+                f"{len(cache[key])} entries in {time.time() - t0:.1f}s (cached)"
+            )
+        return cache[key]
 
     def _connect_metadata_db(self):
         """Connect to metadata database"""
