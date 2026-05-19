@@ -92,7 +92,11 @@ def list_available_models(
         return set(cached_ids) if cached_ids else set()
 
     try:
-        client = OpenAI(api_key=api_key, base_url=base_url)
+        # Short timeout: this call runs in startup_event(), so if the upstream
+        # is slow or unreachable from our network we MUST fail fast — the
+        # OpenAI SDK's default 600s timeout would hang FastAPI startup for
+        # ten minutes and never serve a request.
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=10.0)
         resp = client.models.list()
         ids = {m.id for m in resp.data}
         with _models_lock:
