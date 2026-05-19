@@ -156,7 +156,7 @@ class BM25OnlyRetriever:
                 self.bm25_index_directory,
                 str(top_k),
             ]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
 
             if result.returncode == 0:
                 return json.loads(result.stdout)
