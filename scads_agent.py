@@ -15,7 +15,6 @@ import os
 import time
 import math
 import logging
-import threading
 
 from openai import OpenAI
 
@@ -23,92 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Default values – can be overridden via environment variables or constructor args
 _DEFAULT_BASE_URL = "https://llm.scads.ai/v1"
-_DEFAULT_MODEL = "google/gemma-4-31B-it"
-
-# ----------------------------------------------------------------------
-# Model-list cache (shared across ScadsAgent instances)
-#
-# ScaDS.AI exposes an OpenAI-compatible GET /v1/models endpoint, so we can
-# discover currently registered models at runtime instead of hard-coding a
-# single ID. The list rarely changes within a session, so we cache it for
-# _MODELS_CACHE_TTL seconds. A refresh is triggered when:
-#   * the cache is stale or empty,
-#   * `force_refresh=True` is passed (used after a generate() failure to
-#     reflect a model going DOWN), or
-#   * an explicit caller (e.g. GET /models) asks for fresh data.
-# ----------------------------------------------------------------------
-_MODELS_CACHE_TTL = 300  # 5 minutes
-_models_cache = {"ids": None, "fetched_at": 0.0}
-_models_lock = threading.Lock()
-
-# Project convention (also used by Evaluation/ and Dataset_Generation/):
-# the API key lives in ~/.scadsai-api-key. We honor an explicit argument and
-# the SCADS_API_KEY env var first, then fall back to that file.
-_API_KEY_FILE = os.path.expanduser("~/.scadsai-api-key")
-
-
-def _load_api_key(explicit: str = None) -> str:
-    if explicit:
-        return explicit
-    env_key = os.environ.get("SCADS_API_KEY")
-    if env_key:
-        return env_key
-    if os.path.exists(_API_KEY_FILE):
-        try:
-            with open(_API_KEY_FILE) as f:
-                return f.readline().strip() or None
-        except OSError as exc:
-            logger.warning(f"Could not read {_API_KEY_FILE}: {exc}")
-    return None
-
-
-def list_available_models(
-    api_key: str = None,
-    base_url: str = None,
-    force_refresh: bool = False,
-) -> set:
-    """Return the set of model IDs currently registered on ScaDS.AI.
-
-    Uses a process-wide 5-minute TTL cache. If the upstream call fails the
-    last known good list is returned (empty set if we never succeeded).
-    """
-    now = time.time()
-    with _models_lock:
-        cached_ids = _models_cache["ids"]
-        fresh = (
-            cached_ids is not None
-            and (now - _models_cache["fetched_at"]) < _MODELS_CACHE_TTL
-        )
-        if fresh and not force_refresh:
-            return set(cached_ids)
-
-    api_key = _load_api_key(api_key)
-    base_url = base_url or os.environ.get("SCADS_API_BASE") or _DEFAULT_BASE_URL
-    if not api_key:
-        logger.warning(
-            "list_available_models: no API key available "
-            "(checked SCADS_API_KEY env var and ~/.scadsai-api-key)."
-        )
-        return set(cached_ids) if cached_ids else set()
-
-    try:
-        client = OpenAI(api_key=api_key, base_url=base_url)
-        resp = client.models.list()
-        ids = {m.id for m in resp.data}
-        with _models_lock:
-            _models_cache["ids"] = ids
-            _models_cache["fetched_at"] = now
-        logger.info(f"ScaDS.AI model list refreshed: {len(ids)} models")
-        return set(ids)
-    except Exception as exc:
-        logger.warning(f"Failed to refresh ScaDS.AI model list: {exc}")
-        return set(cached_ids) if cached_ids else set()
-
-
-def invalidate_models_cache() -> None:
-    """Force the next list_available_models() call to hit the network."""
-    with _models_lock:
-        _models_cache["fetched_at"] = 0.0
+_DEFAULT_MODEL = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 
 
 class ScadsAgent:
@@ -136,12 +50,11 @@ class ScadsAgent:
                          then to https://llm.scads.ai/v1.
             max_retries: Number of retry attempts on transient errors.
         """
-        self.api_key = _load_api_key(api_key)
+        self.api_key = api_key or os.environ.get("SCADS_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "SCADS AI API key not provided. Pass api_key=, set the "
-                "SCADS_API_KEY environment variable, or place the key in "
-                f"{_API_KEY_FILE}."
+                "SCADS AI API key not provided. "
+                "Pass api_key= or set the SCADS_API_KEY environment variable."
             )
 
         self.base_url = (
@@ -149,38 +62,13 @@ class ScadsAgent:
             or os.environ.get("SCADS_API_BASE")
             or _DEFAULT_BASE_URL
         )
-        requested_model = model or os.environ.get("SCADS_MODEL") or _DEFAULT_MODEL
-        self.model = self._resolve_model(requested_model)
+        self.model = model or os.environ.get("SCADS_MODEL") or _DEFAULT_MODEL
         self.max_retries = max_retries
 
         self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         logger.info(
             f"ScadsAgent initialized: model={self.model}, base_url={self.base_url}"
         )
-
-    def _resolve_model(self, requested: str) -> str:
-        """Validate the requested model against the live ScaDS.AI model list.
-
-        Falls back to _DEFAULT_MODEL if the request isn't registered, and to
-        any available model if the default is also missing. If we cannot reach
-        the registry at all, trust the requested name (don't block startup).
-        """
-        available = list_available_models(api_key=self.api_key, base_url=self.base_url)
-        if not available:
-            return requested
-        if requested in available:
-            return requested
-        logger.warning(
-            f"Requested model {requested!r} not found on ScaDS.AI; "
-            f"falling back to default {_DEFAULT_MODEL!r}."
-        )
-        if _DEFAULT_MODEL in available:
-            return _DEFAULT_MODEL
-        fallback = sorted(available)[0]
-        logger.warning(
-            f"Default model {_DEFAULT_MODEL!r} also unavailable; using {fallback!r}."
-        )
-        return fallback
 
     # ------------------------------------------------------------------
     # Public interface (mirrors LLMAgent / FalconAgent)
@@ -214,11 +102,6 @@ class ScadsAgent:
 
             except Exception as exc:
                 if attempt == self.max_retries - 1:
-                    # Treat terminal failure as a signal that this model may
-                    # have gone DOWN — invalidate the cache so the next
-                    # list_available_models() call (e.g. from the frontend's
-                    # /models polling) re-fetches the live state.
-                    invalidate_models_cache()
                     raise RuntimeError(
                         f"ScadsAgent.generate failed after {self.max_retries} attempts: {exc}"
                     ) from exc
