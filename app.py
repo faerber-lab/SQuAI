@@ -18,7 +18,6 @@ AVAILABLE_MODELS = [
     "moonshotai/Kimi-K2.6",
     "openai/gpt-oss-120b",
     "meta-llama/Llama-3.3-70B-Instruct",
-    "Qwen/Qwen3-Coder-30B-A3B-Instruct",
 ]
 
 def get_script_path():
@@ -630,7 +629,7 @@ if submit and question:
                 gap: 40px;
             ">
                 <div style="flex: 1;">
-                    <strong>Should split:</strong><br>
+                    <strong>Query decomposition:</strong><br>
                     <code style='color: #00ff99;'>{should_split}</code>
                 </div>
                 <div style="flex: 3;">
