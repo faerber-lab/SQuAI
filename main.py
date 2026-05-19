@@ -12,7 +12,7 @@ from typing import Optional, List
 from langdetect import detect, LangDetectException
 
 # SCADS AI agent (CPU deployment – no local GPU required)
-from scads_agent import ScadsAgent, list_available_models
+from scads_agent import ScadsAgent
 
 
 app = FastAPI()
@@ -129,17 +129,6 @@ def _swap_agents_if_needed(model: str):
     ragent.agent3 = agent
     ragent.agent4 = agent
     ragent.question_splitter.agent = agent
-
-
-@app.get("/models")
-def get_models(refresh: bool = False):
-    """Return the list of ScaDS.AI models currently visible to this process.
-
-    Backed by the TTL cache in scads_agent.list_available_models. Pass
-    `?refresh=true` to force a fresh upstream fetch.
-    """
-    models = sorted(list_available_models(force_refresh=refresh))
-    return {"default": DEFAULT_MODEL, "models": models}
 
 
 @app.post("/split")
