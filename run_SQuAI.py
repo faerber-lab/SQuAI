@@ -60,66 +60,40 @@ class QuestionSplitter:
         logger.info("Agent 1 (Question Splitter) initialized")
 
     def _create_splitting_prompt(self, query: str) -> str:
-        """Create prompt for question splitting analysis"""
-        return f"""You are an intelligent question analyzer. Your task is to determine if a query contains multiple distinct sub-questions that would benefit from separate retrieval and research.
+        """Create prompt for question splitting analysis (JSON output)"""
+        return f"""You are an intelligent question analyzer. Decide whether a user query should be split into multiple sub-questions for separate retrieval.
 
-SPLITTING CRITERIA:
-- Split if query contains multiple distinct topics connected by "and", "also", "what about"
-- Split if query asks for COMPARISONS or DIFFERENCES between concepts (e.g., "difference between X and Y")
-- Split if query asks for comparisons PLUS evaluation/preference (e.g., "which is better")
-- Split if query has multiple question words (what, how, why, when, where, which)
-- Split if query asks about a concept AND its implications/effects/applications
-- DO NOT split simple clarifications or related aspects of the same topic
+Split when:
+- The query asks about multiple distinct topics joined by "and" / "also"
+- The query asks to compare concepts (e.g., "difference between X and Y")
+- The query mixes a comparison with an evaluation (e.g., "which is better")
+- The query asks about a concept AND its implications, effects, or applications
+
+Do not split:
+- Simple definitional questions ("What is X?")
+- Multiple aspects of the same concept ("How does attention work in transformers")
+- Short clarifications
+
+Output strictly valid JSON in this exact schema, and nothing else:
+{{"split": true|false, "sub_questions": ["...", "..."]}}
+
+Rules:
+- If "split" is false, "sub_questions" must be an empty list.
+- If "split" is true, "sub_questions" must contain 2 or more self-contained questions.
+- For "compare X and Y and which is better" style queries, produce three sub-questions: explain X, explain Y, and the comparison/evaluation.
 
 Examples:
 
-Query: "What is quantum computing and how is it used in cryptography?"
-Split: YES
-Sub-questions: ["What is quantum computing?", "How is quantum computing used in cryptography?"]
-
-Query: "What is the difference between dense and sparse retrieval and which one is better suited for RAG?"
-Split: YES
-Sub-questions: ["What is dense retrieval?", "What is sparse retrieval?", "Which retrieval method is better suited for RAG systems?"]
-
-Query: "Compare transformers and RNNs and explain which is better for sequence modeling"
-Split: YES
-Sub-questions: ["What are transformers?", "What are RNNs?", "Which architecture is better for sequence modeling?"]
-
-Query: "What is page rank algorithm and who invented it?"
-Split: YES
-Sub-questions: ["What is page rank algorithm?", "Who invented page rank algorithm?"]
-
-Query: "How does BERT work and what is GPT-3?"
-Split: YES  
-Sub-questions: ["How does BERT work?", "What is GPT-3?"]
-
-Query: "What are the advantages and disadvantages of federated learning?"
-Split: YES
-Sub-questions: ["What are the advantages of federated learning?", "What are the disadvantages of federated learning?"]
-
 Query: "What is reinforcement learning?"
-Split: NO
-Sub-questions: []
+{{"split": false, "sub_questions": []}}
 
-Query: "Explain how attention mechanism works in transformers"
-Split: NO
-Sub-questions: []
+Query: "What is the difference between dense and sparse retrieval and which is better for RAG?"
+{{"split": true, "sub_questions": ["What is dense retrieval?", "What is sparse retrieval?", "Which retrieval method is better suited for RAG systems?"]}}
 
-Query: "What are neural networks and how do they learn and what are CNNs?"
-Split: YES
-Sub-questions: ["What are neural networks?", "How do neural networks learn?", "What are CNNs?"]
+Now analyze this query and output only the JSON object:
 
-Now analyze this query:
 Query: "{query}"
-
-IMPORTANT: For comparison questions with evaluation (like "difference between X and Y and which is better"), always split into:
-1. Explanation of concept X
-2. Explanation of concept Y  
-3. Comparison/evaluation question
-
-Respond with ONLY this format:
-Split: YES/NO
-Sub-questions: [list of questions] (empty list if Split: NO)"""
+"""
 
     def analyze_and_split(self, query: str) -> Tuple[bool, List[str]]:
         """
@@ -170,63 +144,63 @@ Sub-questions: [list of questions] (empty list if Split: NO)"""
             return should_split, sub_questions
             
         except Exception as e:
-            logger.error(f"Error in LLM splitting analysis: {e}")
+            logger.error(f"Error in LLM splitting analysis: {e}", exc_info=True)
             # On error, don't split
             return False, []
 
     def _parse_splitting_response(self, response: str, original_query: str) -> Tuple[bool, List[str]]:
-        """Parse the LLM response for splitting decision"""
+        """Parse the LLM JSON response for splitting decision.
+
+        Expected schema: {"split": bool, "sub_questions": [str, ...]}
+        On any failure, logs the raw response and returns (False, []) so the
+        pipeline safely falls back to treating the query as a single question.
+        """
+        raw = (response or "").strip()
+        if not raw:
+            logger.warning("Agent 1: Empty response from LLM")
+            return False, []
+
+        # Extract the first JSON object from the response. Robust to leading/
+        # trailing prose, code fences, or "Output:" prefixes the model may add.
+        json_match = re.search(r"\{[\s\S]*?\}", raw)
+        if not json_match:
+            logger.warning(f"Agent 1: No JSON object found in response. Raw: {raw[:300]!r}")
+            return False, []
+
         try:
-            lines = response.strip().split('\n')
-            should_split = False
-            sub_questions = []
-
-            for line in lines:
-                line = line.strip()
-                if line.startswith("Split:"):
-                    should_split = "YES" in line.upper()
-                elif line.startswith("Sub-questions:"):
-                    # Extract list from the line
-                    list_part = line.split(":", 1)[1].strip()
-                    if list_part and list_part != "[]":
-                        # Parse the list - handle both ["q1", "q2"] and simple comma-separated
-                        try:
-                            if list_part.startswith("[") and list_part.endswith("]"):
-                                # JSON-like format
-                                sub_questions = json.loads(list_part)
-                            else:
-                                # Comma-separated format
-                                sub_questions = [
-                                    q.strip().strip('"').strip("'")
-                                    for q in list_part.split(",")
-                                ]
-                        except:
-                            logger.warning(f"Failed to parse sub-questions: {list_part}")
-                            sub_questions = []
-
-            # Validation: ensure sub-questions are meaningful
-            if should_split and sub_questions:
-                valid_questions = []
-                for q in sub_questions:
-                    q = q.strip()
-                    # Clean up and validate
-                    if len(q) > 10:
-                        # Add question mark if missing
-                        if not q.endswith("?"):
-                            q = q + "?"
-                        valid_questions.append(q)
-
-                if len(valid_questions) < 2:
-                    logger.info("Not enough valid sub-questions, keeping original")
-                    return False, []
-
-                return True, valid_questions
-
+            parsed = json.loads(json_match.group(0))
+        except json.JSONDecodeError as e:
+            logger.warning(f"Agent 1: JSON decode failed ({e}). Raw: {raw[:300]!r}")
             return False, []
 
-        except Exception as e:
-            logger.warning(f"Error parsing splitting response: {e}")
+        should_split = bool(parsed.get("split", False))
+        sub_questions = parsed.get("sub_questions", [])
+
+        if not isinstance(sub_questions, list):
+            logger.warning(f"Agent 1: sub_questions is not a list: {sub_questions!r}")
             return False, []
+
+        if not should_split:
+            return False, []
+
+        # Normalize and validate
+        valid_questions = []
+        for q in sub_questions:
+            if not isinstance(q, str):
+                continue
+            q = q.strip()
+            if len(q) > 10:
+                if not q.endswith("?"):
+                    q = q + "?"
+                valid_questions.append(q)
+
+        if len(valid_questions) < 2:
+            logger.info(
+                f"Agent 1: split=true but only {len(valid_questions)} valid sub-questions; keeping original"
+            )
+            return False, []
+
+        return True, valid_questions
 
     def _quick_split_check(self, query: str) -> bool:
         """
