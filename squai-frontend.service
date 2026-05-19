@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/home/service/squai/frontend.sh
+ExecStart=/home/service/squai/backend_cpu.sh
 WorkingDirectory=/home/service/squai
 Restart=always
 RestartSec=5

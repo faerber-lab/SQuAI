@@ -55,9 +55,9 @@ def get_ws_list_paths(min_days=8):
     dessen Restlaufzeit mehr als min_days beträgt.
     """
 
-    #directory_path = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
-    #if is_readable_directory(directory_path):
-    #    return directory_path
+    directory_path = "/data/horse/ws/s3811141-faiss/inbe405h-unarxive"
+    if is_readable_directory(directory_path):
+        return directory_path
 
     print("Trying to look for workspace...")
     try:
@@ -103,47 +103,7 @@ def get_ws_list_paths(min_days=8):
     return valid_workspaces[0][1]
 
 def get_main_data_dir():
-    # Erst ws_list versuchen
-    ws_path = get_ws_list_paths(min_days=8)
-    if ws_path and os.path.isdir(ws_path):
-        return ws_path
-
-    # Fallback wie bisher
-    fallback_paths = [
-        "/projects/p_scads_finetune/squai_faiss",
-        "/data/horse/ws/inbe405h-unarxive",
-        "/data/horse/ws/s3811141-faiss/inbe405h-unarxive",
-    ]
-
-    resolved_path = None
-
-    for path in fallback_paths:
-        # Prüfen, ob es eine "data_dir"-Datei ist
-        if os.path.isfile(path):
-            try:
-                with open(path, "r") as f:
-                    content = f.read().strip()
-                if content and os.path.isdir(content):
-                    resolved_path = content
-                    break
-            except (OSError, IOError) as e:
-                sys.stderr.write(f"Fehler beim Lesen von {path}: {e}\n")
-                continue
-
-        # Direktes Verzeichnis prüfen
-        if os.path.isdir(path):
-            resolved_path = path
-            break
-
-    if resolved_path is None:
-        sys.stderr.write(
-            "Kein gültiges Datenverzeichnis gefunden. "
-            f"Versuchte Pfade: {', '.join(fallback_paths)}\n"
-        )
-        sys.exit(1)
-
-    print(f"get_main_data_dir: Using resolved path: {resolved_path}")
-    return resolved_path
+    return "/squai/s3811141-faiss/inbe405h-unarxive"
 
 def get_bm25_python_path():
     # Definierter Pfad

@@ -50,13 +50,12 @@ class ScadsAgent:
                          then to https://llm.scads.ai/v1.
             max_retries: Number of retry attempts on transient errors.
         """
-        self.api_key = api_key or os.environ.get("SCADS_API_KEY")
-        if not self.api_key:
-            raise ValueError(
-                "SCADS AI API key not provided. "
-                "Pass api_key= or set the SCADS_API_KEY environment variable."
-            )
-
+        self.api_key = (
+            api_key 
+            or os.environ.get("SCADS_API_KEY") 
+            or (open(os.path.expanduser("/etc/scads_api_key")).read().strip() if os.path.exists(os.path.expanduser("/etc/scads_api_key")) else None)
+            or (open("/etc/scads_agent_api_key").read().strip() if os.path.exists("/etc/etc/scads_agent_api_key") else None)
+        )
         self.base_url = (
             base_url
             or os.environ.get("SCADS_API_BASE")

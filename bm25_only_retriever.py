@@ -180,7 +180,7 @@ class BM25OnlyRetriever:
             start_time = time.time()
             cmd = [self.bm25_python, self.bm25_script, query, self.bm25_index_directory, str(top_k)]
             
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
             
             elapsed = time.time() - start_time
             

@@ -1,4 +1,5 @@
 import sys
+import json
 
 try:
     import streamlit as st
@@ -11,6 +12,16 @@ try:
 except ModuleNotFoundError as e:
     print(f"Module not found: {e}. Did you run this script via frontend.sh?")
     sys.exit(1)
+
+AVAILABLE_MODELS = [
+    "meta-llama/Llama-3.3-70B-Instruct",
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "moonshotai/Kimi-K2.5",
+    "openai/gpt-oss-120b",
+    "MiniMaxAI/MiniMax-M2.5",
+    "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    "Qwen/Qwen3-VL-8B-Instruct",
+]
 
 def get_script_path():
     try:
@@ -375,6 +386,45 @@ def check_backend_available(url, timeout=5):
     except:
         return False
 
+def check_external_api_health():
+    """Checks the ScaDS AI LLM health endpoint and identifies specific unhealthy models"""
+    url = "https://llm.scads.ai/health"
+    try:
+        api_key = (
+            os.environ.get("SCADS_API_KEY")
+            or (open(os.path.expanduser("/etc/scads_api_key")).read().strip() if os.path.exists(os.path.expanduser("/etc/scads_api_key")) else None)
+            or (open("/etc/scads_agent_api_key").read().strip() if os.path.exists("/etc/etc/scads_agent_api_key") else None)
+        )
+        
+        headers = {"Authorization": f"Bearer {api_key}"}
+        response = requests.get(url, headers=headers, timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            unhealthy_count = data.get("unhealthy_count", 0)
+            
+            if unhealthy_count == 0:
+                return "green", "All systems operational"
+            else:
+                # Extract model names from the unhealthy_endpoints list
+                unhealthy_list = data.get("unhealthy_endpoints", [])
+                model_names = {item.get("model", "Unknown Model") for item in unhealthy_list}
+                
+                # Only flag models that are in AVAILABLE_MODELS
+                affected_models = model_names & set(AVAILABLE_MODELS)
+                
+                if not affected_models:
+                    return "green", "All relevant systems seem operational"
+                
+                names_str = ", ".join(affected_models)
+                affected_count = len(affected_models)
+                
+                return "yellow", f"Warning: {affected_count} unhealthy endpoint(s) affecting available models: {names_str}"
+        
+        return "red", f"API Error: {response.status_code}"
+    except Exception as e:
+        return "red", f"Connection failed: {str(e)}"
+
 def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_restarts=5):
     backend_restarts = 0
 
@@ -410,7 +460,7 @@ def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_re
         print(f"All {max_retries} attempts failed. Starting backend...")
         if start_backend():
             backend_restarts += 1
-            if not wait_for_backend("http://localhost:8000", timeout=120):
+            if not wait_for_backend("http://localhost:8000", timeout=600):
                 print("Backend did not become available in time.")
                 continue
         else:
@@ -420,13 +470,39 @@ def post_with_retry(url, payload, wait_between=30, max_retries=5, max_backend_re
     raise RuntimeError(f"POST failed after {max_backend_restarts} backend restarts")
 
 # Page Configuration
+status_color, status_message = check_external_api_health()
 st.set_page_config(page_title="SQuAI", layout="wide")
-st.title("SQuAI")
-
 st.markdown("""
 <style>
+/* ── Smooth transitions on ALL interactive elements ── */
+button, input, select, textarea,
+.stButton > button,
+.stTextInput > div > div > input,
+.stSelectbox > div > div,
+[data-testid="stExpander"],
+.stSlider > div {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ── Buttons: lift on hover ── */
+.stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.08);
+}
+.stButton > button:active {
+    transform: translateY(0px);
+}
+</style>
+""", unsafe_allow_html=True)
+st.title("SQuAI")
+
+# First, ensure you have the logic to define these variables before the markdown call
+# status_color, status_message = check_external_api_health() 
+
+st.markdown(f"""
+<style>
 /* Footer fixieren */
-.footer {
+.footer {{
     position: fixed;
     bottom: 0;
     left: 0;
@@ -438,38 +514,41 @@ st.markdown("""
     font-size: 0.85em;
     z-index: 100;
     border-top: 1px solid #444;
-}
+}}
 
-.footer a {
+.footer a {{
     color: #aaa;
     text-decoration: none;
     margin: 0 15px;
-}
+}}
 
-.footer a:hover {
+.footer a:hover {{
     text-decoration: underline;
-}
+}}
 </style>
 
-<div class="footer">
+<div class="footer" title="{status_message}">
     <a href="https://scads.ai/imprint/" target="_blank">Impressum</a>
     <a href="https://scads.ai/privacy/" target="_blank">Datenschutzerklärung</a>
     <a href="https://scads.ai/accessibility/" target="_blank">Barrierefreiheit</a>
+    <span style="
+        height: 12px;
+        width: 12px;
+        background-color: {status_color};
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 10px;
+        margin-right: 5px;
+        vertical-align: middle;
+        box-shadow: 0 0 5px {status_color};
+    "></span>
+    <span style="font-size: 0.9em; color: #aaa; vertical-align: middle;">API Status</span>
 </div>
 """, unsafe_allow_html=True)
 
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-AVAILABLE_MODELS = [
-    "meta-llama/Llama-3.3-70B-Instruct",
-    "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-    "moonshotai/Kimi-K2.5",
-    "openai/gpt-oss-120b",
-    "MiniMaxAI/MiniMax-M2.5",
-    "Qwen/Qwen3-Coder-30B-A3B-Instruct",
-    "Qwen/Qwen3-VL-8B-Instruct",
-]
 model_choice = st.sidebar.selectbox("Language Model", AVAILABLE_MODELS, index=0)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["Hybrid","bm25", "e5"], index=0)
 
@@ -523,9 +602,10 @@ if submit and question:
             st.error(f"❌ {e}")
 
     # Check if we got a 503 error
-    if split_response is not None and isinstance(split_response, dict) and split_response.get('is_503'):
-        show_503_page()
-    elif split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
+    #if split_response is not None and isinstance(split_response, dict) and split_response.get('is_503'):
+    #    show_503_page()
+    #elif split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
+    if split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
         split_data = split_response.json()
         should_split = split_data.get("should_split")
         sub_questions = split_data.get("sub_questions", [])
@@ -577,18 +657,20 @@ if submit and question:
                 "sub_questions": sub_questions
             }
             try:
-                ask_response = requests.post(ask_url, json=ask_payload, timeout=120)
+                ask_response = requests.post(ask_url, json=ask_payload, timeout=600)
             except requests.exceptions.ConnectionError:
-                show_503_page()
+                #show_503_page()
+                st.error(f"❌ Error: {str(e)}")
                 st.stop()
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}")
                 st.stop()
 
         # Check for 503 on ask endpoint too
-        if ask_response.status_code == 503:
-            show_503_page()
-        elif ask_response.status_code == 200:
+        #if ask_response.status_code == 503:
+        #    show_503_page()
+        #elif ask_response.status_code == 200:
+        if ask_response.status_code == 200:
             data = ask_response.json()
             answer = data.get("answer", "").replace("*", "")
             debug_info = data.get("debug_info", {})
