@@ -74,11 +74,17 @@ def startup_event():
         )
         # Instantiate SCADS AI agent (reads SCADS_API_KEY from environment)
         scads_agent = _get_scads_agent(DEFAULT_MODEL)
+        # NOTE: index_dir is intentionally NOT set to BM25_INDEX_DIR.
+        # BM25_INDEX_DIR contains a 7.5 GB corpus.jsonl whose schema does not
+        # match what EnhancedCitationHandler._load_arxiv_papers expects, so
+        # parsing it produced no usable metadata while costing ~82s per query.
+        # Letting index_dir default to a non-existent path makes the arxiv
+        # metadata loader a no-op; BM25 retrieval itself is unaffected because
+        # it goes through the `retriever` object (not self.index_dir).
         ragent = Enhanced4AgentRAG(
             retriever=retriever,
             agent_model=scads_agent,  # pass pre-built agent object
             n=DEFAULT_N_VALUE,
-            index_dir=BM25_INDEX_DIR,
             max_workers=6,
         )
     except plyvel._plyvel.IOError as e:
