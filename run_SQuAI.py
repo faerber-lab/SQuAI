@@ -854,7 +854,7 @@ class Enhanced4AgentRAG:
         self.n = n
         self.index_dir = index_dir
         self.max_workers = max_workers
-        self.max_context_chars = max_context_chars  # ~50K tokens, suitable for Llama-4-Scout
+        self.max_context_chars = max_context_chars  # ~50K tokens; well within Gemma-4-31B's 200K window
 
         logger.info(f"Context limit set to {max_context_chars} characters")
 
@@ -1633,8 +1633,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default=os.environ.get("SCADS_MODEL", "meta-llama/Llama-4-Scout-17B-16E-Instruct"),
-        help="Model for LLM agents (default: SCADS_MODEL env var or Llama-4-Scout)",
+        default=os.environ.get("SCADS_MODEL", "google/gemma-4-31B-it"),
+        help="Model for LLM agents (default: SCADS_MODEL env var or google/gemma-4-31B-it)",
     )
     parser.add_argument(
         "--n", type=float, default=0.5, help="Adjustment factor for adaptive judge bar"

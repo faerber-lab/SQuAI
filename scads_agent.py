@@ -45,7 +45,7 @@ class ScadsAgent:
 
         Args:
             api_key:     SCADS AI API key. Falls back to SCADS_API_KEY env var.
-            model:       Model identifier (default: meta-llama/Llama-3.3-70B-Instruct).
+            model:       Model identifier (default: google/gemma-4-31B-it).
             base_url:    API base URL. Falls back to SCADS_API_BASE env var,
                          then to https://llm.scads.ai/v1.
             max_retries: Number of retry attempts on transient errors.
