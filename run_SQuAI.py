@@ -1075,30 +1075,23 @@ Is this document relevant and supportive for answering the question?"""
         available_citations = [str(i) for i in range(1, len(docs_with_citations) + 1)]
         citation_examples = ", ".join(available_citations)
 
-        return f"""You are an accurate and reliable AI assistant. Answer questions based ONLY on the provided documents with proper academic citations.
+        return f"""You are an accurate and reliable AI assistant. Answer questions based only on the provided documents with academic citations.
 
-STRICT CITATION REQUIREMENTS - YOU MUST FOLLOW THESE:
-1. You MUST add [{citation_examples}] after EVERY claim you make
-2. Every sentence that contains factual information MUST end with a citation
-3. If you mention ANY concept, method, or fact, cite the document immediately
-4. Use ONLY the document numbers shown: [{citation_examples}]
-5. Do NOT write ANY sentence without a citation number
-6. Use MULTIPLE different documents - don't just cite [1] repeatedly
-7. Do NOT add a references section - it will be added automatically
-8. EXAMPLE: "Machine learning involves pattern recognition [1]. Neural networks are a popular approach [2]. Deep learning has shown success in many domains [3]."
+Citation rules:
+- Cite every factual claim with [n] using only the document numbers shown: [{citation_examples}]
+- Use multiple documents where applicable; do not anchor most claims to a single document.
+- Do not add a References or Bibliography section; it will be added automatically.
 
-WRONG (no citations): "Machine learning is a powerful technique."
-CORRECT (with citations): "Machine learning is a powerful technique for pattern recognition [1]."
-
-WRONG (only one citation): "ML works by finding patterns [1]. It uses algorithms [1]. It requires data [1]."
-CORRECT (multiple citations): "ML works by finding patterns [1]. It uses algorithms [2]. It requires data [3]."
+Format:
+- Write in coherent explanatory prose by default.
+- Use a short bullet list (with "- " markers, one item per line) only when the question explicitly asks for a comparison, enumeration, or list of items.
 
 Documents:
 {docs_text}
 
 Question: {original_query}
 
-Remember: Use information from MULTIPLE documents and cite each one appropriately with [{citation_examples}]. Answer:"""
+Answer:"""
 
     def _log_retrieved_papers(
         self, query: str, retrieved_abstracts: List[Tuple], phase: str = "RETRIEVAL"
