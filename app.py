@@ -549,7 +549,89 @@ st.markdown(f"""
 # Sidebar for settings
 st.sidebar.markdown("## Settings")
 
-model_choice = st.sidebar.selectbox("Language Model", AVAILABLE_MODELS, index=0)
+# Filters that keep the demo dropdown limited to chat-capable LLMs.
+# ScaDS.AI's /v1/models returns every modality (embedding, reranker, TTS, STT,
+# image-gen) in one list, so we apply three layers of filtering:
+#   * prefix       — drops scads internal aliases (alias-*) whose canonical
+#                    target model is already in the list on its own.
+#   * substring    — drops whole modalities (embeddings, speech, image-gen)
+#                    by name patterns, so newly-added non-chat models are
+#                    rejected automatically without touching this file.
+#   * exact name   — drops specific chat models we judge too weak / narrow
+#                    for this RAG demo (4k context, vision-only, 8B, etc.).
+HIDDEN_MODEL_PREFIXES = ("alias-",)
+HIDDEN_MODEL_SUBSTRINGS = (
+    "embedding", "reranker",          # retrieval models
+    "whisper", "tts", "kokoro",       # speech
+    "flux", "stable-diffusion",       # image generation
+)
+HIDDEN_MODELS = {
+    "openGPT-X/Teuken-7B-instruct-v0.6",   # 4k context, unusable for full-text RAG
+    "Qwen/Qwen3-VL-8B-Instruct",           # vision-only
+    "meta-llama/Llama-3.1-8B-Instruct",    # 32k context + 8B, too weak here
+}
+FALLBACK_DEFAULT_MODEL = "google/gemma-4-31B-it"
+
+
+def _is_chat_model(name: str) -> bool:
+    if name in HIDDEN_MODELS:
+        return False
+    if any(name.startswith(p) for p in HIDDEN_MODEL_PREFIXES):
+        return False
+    low = name.lower()
+    if any(s in low for s in HIDDEN_MODEL_SUBSTRINGS):
+        return False
+    return True
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def fetch_available_models():
+    """Pull the live model list from the backend (5-min cache).
+
+    The backend itself caches /v1/models for 5 minutes and invalidates that
+    cache when a generate() call fails, so this client-side TTL is enough to
+    surface UP/DOWN changes without hammering the API.
+    """
+    try:
+        resp = requests.get("http://localhost:8000/models", timeout=3)
+        data = resp.json()
+        raw = data.get("models", [])
+        default = data.get("default", FALLBACK_DEFAULT_MODEL)
+    except Exception:
+        return [FALLBACK_DEFAULT_MODEL], FALLBACK_DEFAULT_MODEL
+
+    visible = [m for m in raw if _is_chat_model(m)]
+    if not visible:
+        visible = [default]
+    return visible, default
+
+
+AVAILABLE_MODELS, BACKEND_DEFAULT_MODEL = fetch_available_models()
+
+# Preserve the user's previous selection across reruns. If it has since gone
+# DOWN / been filtered out, fall back to the backend's default; if even that
+# isn't available, use the first remaining model.
+#
+# IMPORTANT: when key= is set, Streamlit prefers session_state over index= on
+# rerun, and raises StreamlitAPIException if the stored value is not in
+# `options`. So we must scrub a stale value out of session_state *before*
+# rendering the widget — otherwise the dropdown crashes the page the moment a
+# previously-selected model is removed from the live list.
+_prev_choice = st.session_state.get("model_choice")
+if _prev_choice is not None and _prev_choice not in AVAILABLE_MODELS:
+    del st.session_state["model_choice"]
+    _prev_choice = None
+
+if _prev_choice in AVAILABLE_MODELS:
+    _default_idx = AVAILABLE_MODELS.index(_prev_choice)
+elif BACKEND_DEFAULT_MODEL in AVAILABLE_MODELS:
+    _default_idx = AVAILABLE_MODELS.index(BACKEND_DEFAULT_MODEL)
+else:
+    _default_idx = 0
+
+model_choice = st.sidebar.selectbox(
+    "Language Model", AVAILABLE_MODELS, index=_default_idx, key="model_choice"
+)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["Hybrid","bm25", "e5"], index=0)
 
 n_value = st.sidebar.slider(
