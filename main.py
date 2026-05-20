@@ -9,7 +9,11 @@ from config import DB_PATH, BM25_INDEX_DIR, E5_INDEX_DIR
 from typing import Optional, List
 
 # Import language detection library
-from langdetect import detect, LangDetectException
+from langdetect import detect, detect_langs, DetectorFactory, LangDetectException
+
+# Make langdetect deterministic so the same query yields the same verdict
+# across runs (default behavior is non-deterministic).
+DetectorFactory.seed = 0
 
 # SCADS AI agent (CPU deployment – no local GPU required)
 from scads_agent import ScadsAgent
@@ -34,15 +38,43 @@ NON_ENGLISH_MESSAGE = (
 
 
 # Language detection function
+# Tuned to reduce false positives on short scientific queries like
+# "dense retrieval" or "BM25" that langdetect frequently misclassifies.
+MIN_DETECT_CHARS = 20      # below this, default to English
+MIN_CONFIDENCE = 0.85      # below this on ASCII input, default to English
+
 def detect_language(text: str) -> str:
     """
-    Detect query language
+    Detect query language.
     Returns: 'en', 'de', 'zh', 'ja', 'es', 'fr', etc.
+
+    Heuristics on top of langdetect:
+    1. Very short input -> 'en' (langdetect is unreliable on < ~20 chars).
+    2. Pure ASCII letters/punct -> require high confidence to leave 'en',
+       otherwise default to 'en' (scientific English terms often trip
+       langdetect into Catalan/Indonesian/etc.).
+    3. Any non-ASCII (CJK, Cyrillic, Arabic, ...) -> trust full detection.
     """
+    text = (text or "").strip()
+    if len(text) < MIN_DETECT_CHARS:
+        return "en"
+
+    if text.isascii():
+        try:
+            candidates = detect_langs(text)
+            if not candidates:
+                return "en"
+            top = candidates[0]
+            if top.lang == "en" or top.prob < MIN_CONFIDENCE:
+                return "en"
+            return top.lang
+        except LangDetectException:
+            return "en"
+
     try:
         return detect(text)
     except LangDetectException:
-        return "en"  # Default to English on error
+        return "en"
 
 
 # Global objects
