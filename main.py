@@ -151,6 +151,48 @@ class QueryRequest(BaseModel):
     n_value: Optional[float] = DEFAULT_N_VALUE
     top_k: Optional[int] = DEFAULT_TOP_K
     alpha: Optional[float] = DEFAULT_ALPHA
+    # Multi-turn chat: prior turns [{"question": str, "answer": str}, ...]. When present,
+    # the new question is rewritten into a standalone question before retrieval. When
+    # absent/empty, behaviour is identical to single-query mode (fully backward compatible).
+    chat_history: Optional[List[dict]] = None
+
+
+def contextualize_question(history, question, agent) -> str:
+    """Rewrite a follow-up into a self-contained, standalone question using prior turns.
+
+    The retriever needs a standalone question (a bare "what about its limitations?" has no
+    subject to retrieve on). Returns the original question unchanged when there is no
+    history, or on any failure.
+    """
+    if not history:
+        return question
+    turns = []
+    for h in history[-3:]:                      # last 3 turns keep the prompt small
+        q = (h.get("question") or "").strip()
+        a = (h.get("answer") or "").strip()
+        if q:
+            turns.append(f"User: {q}")
+        if a:
+            turns.append(f"Assistant: {a[:400]}")
+    if not turns:
+        return question
+    prompt = (
+        "You rewrite a user's follow-up question into a fully self-contained, standalone "
+        "question for a scientific search system. Resolve every pronoun and reference "
+        "(it, they, that, this method, the model, etc.) using the conversation. If the "
+        "follow-up is already standalone, return it unchanged. Output ONLY the rewritten "
+        "question, with no preamble or quotes.\n\n"
+        f"Conversation:\n{chr(10).join(turns)}\n\n"
+        f"Follow-up question: {question}\n\n"
+        "Standalone question:"
+    )
+    try:
+        rewritten = (agent.generate(prompt, max_new_tokens=128) or "").strip().strip('"').strip()
+        if rewritten and len(rewritten) <= 500:
+            return rewritten
+    except Exception:
+        pass
+    return question
 
 
 def _swap_agents_if_needed(model: str):
@@ -220,8 +262,18 @@ def ask_question(req: QueryRequest):
     # Switch to the requested model if different from current
     _swap_agents_if_needed(req.model)
 
-    # English query, proceed with normal RAG pipeline
+    # Multi-turn: rewrite a follow-up into a standalone question using chat history.
+    # No history -> standalone == req.question, so single-query behaviour is unchanged.
+    standalone = contextualize_question(req.chat_history, req.question, ragent.agent1)
+    rewritten = standalone != req.question
+    # A rewritten question must be (re)analysed for splitting; ignore stale client split.
+    should_split = None if rewritten else req.should_split
+    sub_questions = None if rewritten else req.sub_questions
+
     result, references, debug_info = ragent.answer_query(
-        req.question, db, should_split=req.should_split, sub_questions=req.sub_questions
+        standalone, db, should_split=should_split, sub_questions=sub_questions
     )
+    if isinstance(debug_info, dict):
+        debug_info["asked_question"] = req.question
+        debug_info["standalone_question"] = standalone
     return {"answer": result, "references": references, "debug_info": debug_info}

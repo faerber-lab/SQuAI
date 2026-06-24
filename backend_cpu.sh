@@ -67,6 +67,16 @@ cd $SCRIPT_DIR
 nice_echo "Creating log dir $SCRIPT_DIR"
 mkdir -p logs
 
+# --- New pipeline feature flags (passage ranking + sentence attribution) ---
+# NOTE: MAIN_DATA_DIR and SCADS_API_KEY are intentionally NOT set here — they resolve
+# exactly as before (config.get_main_data_dir() and the existing environment /
+# ScadsAgent's own key lookup). Only the new feature toggles are added; all are
+# overridable from the environment and default to safe values.
+export USE_PASSAGES="${USE_PASSAGES:-1}"
+export PASSAGE_BACKEND="${PASSAGE_BACKEND:-scads_rerank}"   # bm25 | scads_rerank | scads_embed
+export ATTRIBUTION_VERIFY="${ATTRIBUTION_VERIFY:-lexical}"  # lexical | scads_rerank
+export AGENT_CONCURRENCY="${AGENT_CONCURRENCY:-8}"
+
 nice_echo "Launch FastAPI with uvicorn (CPU mode)"
 uvicorn_port=8000 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1 &
 

@@ -873,8 +873,51 @@ class Enhanced4AgentRAG:
         # Initialize question splitter
         self.question_splitter = QuestionSplitter(self.agent1)
 
-        # Thread pool for parallel processing
+        # Thread pool for parallel processing (sub-questions)
         self.executor = ThreadPoolExecutor(max_workers=max_workers)
+
+        # SEPARATE pool for the per-abstract Agent2->Agent3 chains (Phase-1 latency fix).
+        # Kept distinct from self.executor so the sub-question futures that block on that
+        # pool cannot starve/deadlock the inner per-abstract calls.
+        try:
+            import config as _cfg0
+            self.agent2_max_tokens = getattr(_cfg0, "AGENT2_MAX_TOKENS", 256)
+            inner_workers = getattr(_cfg0, "AGENT_CONCURRENCY", 8)
+        except Exception:
+            self.agent2_max_tokens = 256
+            inner_workers = 8
+        self._inner_executor = ThreadPoolExecutor(max_workers=inner_workers)
+        logger.info(
+            f"Agent2/3 concurrency: {inner_workers} workers, "
+            f"agent2_max_tokens={self.agent2_max_tokens}"
+        )
+
+        # Passage-level context selection (replaces the TOP/BOTTOM char slice).
+        # Off-by-config falls back to the legacy slicer; import failure is non-fatal.
+        self.passage_ranker = None
+        self.use_passages = False
+        try:
+            import config as _cfg
+            if getattr(_cfg, "USE_PASSAGES", False):
+                from passage_ranker import PassageRanker, ScadsBackends
+                scads = ScadsBackends(
+                    base_url=getattr(_cfg, "SCADS_API_BASE", None),
+                    rerank_model=getattr(_cfg, "RERANK_MODEL", "BAAI/bge-reranker-v2-m3"),
+                    embed_model=getattr(_cfg, "EMBED_MODEL", "Qwen/Qwen3-Embedding-4B"),
+                )
+                self.passage_ranker = PassageRanker(
+                    backend=getattr(_cfg, "PASSAGE_BACKEND", "bm25"),
+                    top_k=getattr(_cfg, "PASSAGE_TOP_K", 12),
+                    candidates=getattr(_cfg, "PASSAGE_CANDIDATES", 24),
+                    scads=scads,
+                )
+                self.use_passages = True
+                logger.info(
+                    f"Passage ranker enabled: backend={self.passage_ranker.backend}, "
+                    f"top_k={self.passage_ranker.top_k}, candidates={self.passage_ranker.candidates}"
+                )
+        except Exception as e:
+            logger.warning(f"Passage ranker disabled ({e}); using legacy char-slice context")
 
         # Enhanced pre-warming
         logger.info("Enhanced 4-agent pre-warming...")
@@ -1059,15 +1102,89 @@ Is this document relevant and supportive for answering the question?"""
 
         return docs_with_citations
 
+    def _prepare_documents_for_agent4_passages(
+        self, query, full_texts, citation_handler, expansion_text: str = ""
+    ):
+        """Query-relevant passage selection (replaces the TOP/BOTTOM char slice).
+
+        Ranks section-aware passages from the filtered papers against the query, then
+        registers each PAPER as one citation whose text is its selected passages. This
+        keeps the per-document [n] citation scheme (and the app.py 4-tuple references
+        contract) intact while sending Agent 4 only the relevant ~top_k passages.
+        The exact (paper_id, section, char span) of every passage is stored on
+        self._last_passage_table for sentence-level attribution in debug_info.
+        """
+        top = self.passage_ranker.rank(query, full_texts, expansion_text=expansion_text)
+        if not top:
+            logger.warning("Passage ranker returned nothing; falling back to char-slice")
+            return self._prepare_documents_for_agent4(full_texts, citation_handler, False)
+
+        # Group passages by paper, preserving global rank order of first appearance.
+        by_paper: Dict[str, list] = {}
+        for p in top:
+            by_paper.setdefault(p.paper_id, []).append(p)
+        blob_by_id = {pid: txt for txt, pid in full_texts}
+
+        self._last_passage_table = {}
+        docs_with_citations = []
+        eid = 1
+        total_chars = 0
+        for paper_id, passages in by_paper.items():
+            # Prepend the real title so add_document's title extraction + arxiv-metadata
+            # match work (the passages themselves carry no title line).
+            title = PaperTitleExtractor.extract_title_from_text(
+                blob_by_id.get(paper_id, ""), paper_id
+            )
+            title_line = (
+                f"Title: {title}\n\n" if title and not title.startswith("Document ") else ""
+            )
+            condensed = title_line + "\n\n".join(f"[{p.section}] {p.text}" for p in passages)
+            citation_num = citation_handler.add_document(condensed, paper_id)
+            paper_info = citation_handler.citation_to_doc[citation_num]["paper_info"]
+            doc_title = (
+                paper_info["title"][:80] + "..."
+                if len(paper_info["title"]) > 80 else paper_info["title"]
+            )
+            docs_with_citations.append(
+                f'Document [{citation_num}] - "{doc_title}":\n{condensed}'
+            )
+            for p in passages:
+                self._last_passage_table[f"E{eid}"] = {
+                    "citation_num": citation_num, "paper_id": p.paper_id,
+                    "section": p.section, "section_type": p.section_type,
+                    "char_start": p.char_start, "char_end": p.char_end,
+                    "text": p.text, "score": round(p.score, 4),
+                }
+                eid += 1
+            total_chars += len(condensed)
+            logger.info(
+                f"  Doc [{citation_num}]: {doc_title[:55]}... "
+                f"({len(passages)} passages, {len(condensed)} chars)"
+            )
+        logger.info(
+            f"Passage context: {len(top)} passages from {len(by_paper)} papers, "
+            f"{total_chars} chars (~{total_chars // 4} tokens) "
+            f"[backend={self.passage_ranker.backend}]"
+        )
+        return docs_with_citations
+
     def _create_agent4_prompt_with_citations(
-        self, original_query, full_texts, citation_handler, was_split: bool = False
+        self, original_query, full_texts, citation_handler, was_split: bool = False,
+        sub_questions=None
     ):
         """Agent-4 prompt with context-aware document preparation"""
 
-        # Prepare documents with dynamic context management based on question splitting
-        docs_with_citations = self._prepare_documents_for_agent4(
-            full_texts, citation_handler, was_split
-        )
+        if self.use_passages and self.passage_ranker is not None:
+            # Expand the ranking query for free with the sub-questions (HyDE-style).
+            expansion_text = " ".join(sub_questions) if sub_questions else ""
+            docs_with_citations = self._prepare_documents_for_agent4_passages(
+                original_query, full_texts, citation_handler, expansion_text
+            )
+        else:
+            # Legacy: dynamic context management based on question splitting
+            docs_with_citations = self._prepare_documents_for_agent4(
+                full_texts, citation_handler, was_split
+            )
 
         docs_text = "\n\n" + "=" * 50 + "\n\n".join(docs_with_citations)
 
@@ -1197,30 +1314,48 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
             # ✨ NEW: Log retrieved papers with titles
             self._log_retrieved_papers(query, retrieved_abstracts, "RETRIEVAL")
 
-        # Step 2: Agent-2 generates answers from ABSTRACTS
-        with time_block(f"agent2_generation_{query[:20]}"):
-            logger.info(
-                f"Agent-2 generating answers from abstracts for: {query[:50]}..."
-            )
-            doc_answers = []
-            for abstract_text, doc_id in tqdm(retrieved_abstracts):
-                prompt = self._create_agent2_prompt(query, abstract_text)
-                answer = self.agent2.generate(prompt)
-                doc_answers.append((abstract_text, doc_id, answer))
-
-        # Step 3: Agent-3 evaluates documents using ABSTRACTS
-        with time_block(f"agent3_evaluation_{query[:20]}"):
-            logger.info(f"Agent-3 evaluating abstracts for: {query[:50]}...")
-            scores = []
-            for abstract_text, doc_id, answer in tqdm(doc_answers):
-                prompt = self._create_agent3_prompt(query, abstract_text, answer)
-                log_probs = self.agent3.get_log_probs(prompt, ["Yes", "No"])
+        # Steps 2+3: Agent-2 (answer from abstract) -> Agent-3 (judge that answer) run as
+        # ONE chain per abstract, executed CONCURRENTLY. This preserves the Agent2->Agent3
+        # dependency (Agent 3 judges Agent 2's answer) while collapsing the former 2x5
+        # SEQUENTIAL remote round-trips into ~5 parallel chains (~1 chain of wall-clock).
+        # Uses a SEPARATE executor from self.executor (which the sub-question futures
+        # already block on) to avoid nested-pool starvation.
+        def _agent2_3_chain(item):
+            abstract_text, doc_id = item
+            try:
+                a2 = self.agent2.generate(
+                    self._create_agent2_prompt(query, abstract_text),
+                    max_new_tokens=self.agent2_max_tokens,
+                )
+                log_probs = self.agent3.get_log_probs(
+                    self._create_agent3_prompt(query, abstract_text, a2), ["Yes", "No"]
+                )
                 score = log_probs["Yes"] - log_probs["No"]
-                scores.append(score)
+                return abstract_text, doc_id, a2, float(score)
+            except Exception as e:
+                logger.warning(f"Agent2/3 chain failed for {doc_id}: {e}")
+                # Strongly negative score -> this doc is filtered out, batch survives.
+                return abstract_text, doc_id, "", float("-inf")
 
-        # Step 4: Calculate adaptive judge bar
-        tau_q = np.mean(scores)
-        sigma = np.std(scores)
+        with time_block(f"agent2_3_parallel_{query[:20]}"):
+            logger.info(
+                f"Agent-2/3 evaluating {len(retrieved_abstracts)} abstracts in parallel "
+                f"for: {query[:50]}..."
+            )
+            # executor.map preserves input order, so scores[i] aligns with doc_answers[i].
+            chain_results = list(self._inner_executor.map(_agent2_3_chain, retrieved_abstracts))
+
+        doc_answers = [(a, d, ans) for (a, d, ans, _) in chain_results]
+        scores = [s for (_, _, _, s) in chain_results]
+
+        # Step 4: Calculate adaptive judge bar over the FINITE scores only (a failed
+        # chain returns -inf and must not poison mean/std; it still fails the filter).
+        finite_scores = [s for s in scores if np.isfinite(s)]
+        if finite_scores:
+            tau_q = float(np.mean(finite_scores))
+            sigma = float(np.std(finite_scores))
+        else:
+            tau_q = sigma = 0.0
         adjusted_tau_q = tau_q - self.n * sigma
         logger.info(
             f"Adaptive judge bar for '{query[:30]}...': tau_q={tau_q:.4f}, adjusted: {adjusted_tau_q:.4f}"
@@ -1342,14 +1477,18 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
                         logger.info(f"Doc ID: {doc_id}")
                     logger.info("=" * 80)
 
-                    # Log context usage
-                    estimated_docs_used = min(
-                        len(full_texts),
-                        self.max_context_chars // (4000 if should_split else 8000),
-                    )
-                    self._log_context_usage(
-                        full_texts, estimated_docs_used, should_split
-                    )
+                    # Log context usage. The TOP/BOTTOM char-slice stats only apply to
+                    # the legacy path; with the passage ranker on, the real context is
+                    # logged later by _prepare_documents_for_agent4_passages
+                    # ("Passage context: N passages ... ~tokens [backend=...]").
+                    if not (self.use_passages and self.passage_ranker is not None):
+                        estimated_docs_used = min(
+                            len(full_texts),
+                            self.max_context_chars // (4000 if should_split else 8000),
+                        )
+                        self._log_context_usage(
+                            full_texts, estimated_docs_used, should_split
+                        )
 
                 else:
                     logger.warning("No documents passed the filter, using fallback")
@@ -1387,7 +1526,8 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
                     f"Agent-4 generating final answer with context-aware citations... [{strategy_info}]"
                 )
                 prompt = self._create_agent4_prompt_with_citations(
-                    query, full_texts, citation_handler, should_split
+                    query, full_texts, citation_handler, should_split,
+                    sub_questions=sub_questions if should_split else None,
                 )
                 raw_answer = self.agent4.generate(prompt)
 
@@ -1399,6 +1539,26 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
                 raw_answer = re.split(r"References", raw_answer)[0]
 
             citation_map = citation_handler.get_citation_map()
+
+            # Sentence-level attribution: map each answer sentence to its source passage
+            # span (additive; does not touch the answer text or the references 4-tuple).
+            sentence_attributions = []
+            if self.use_passages and getattr(self, "_last_passage_table", None):
+                try:
+                    from passage_ranker import attribute_sentences
+                    import config as _cfg
+                    verify = getattr(_cfg, "ATTRIBUTION_VERIFY", "lexical")
+                    reranker = self.passage_ranker.scads if verify == "scads_rerank" else None
+                    sentence_attributions = attribute_sentences(
+                        raw_answer, self._last_passage_table, verify=verify, reranker=reranker
+                    )
+                    grounded = sum(1 for s in sentence_attributions if s.get("verified"))
+                    logger.info(
+                        f"Sentence attribution: {grounded}/{len(sentence_attributions)} "
+                        f"sentences grounded to a passage span (verify={verify})"
+                    )
+                except Exception as e:
+                    logger.warning(f"Sentence attribution failed: {e}")
 
             # Enhanced debug info
             debug_info = {
@@ -1414,25 +1574,48 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
                     raw_answer, citation_handler
                 ),
                 "document_metadata": self._extract_document_metadata(citation_handler),
-                "context_stats": {
-                    "max_context_chars": self.max_context_chars,
-                    "total_chars_available": sum(len(text) for text, _ in full_texts),
-                    "docs_available": len(full_texts),
-                    "estimated_docs_used": min(
-                        len(full_texts),
-                        self.max_context_chars // (4000 if should_split else 8000),
-                    ),
-                    "strategy": (
-                        "CONSERVATIVE (split questions)"
-                        if should_split
-                        else "GENEROUS (single question)"
-                    ),
-                    "chars_per_paper_limit": (
-                        "TOP(2.5K)+BOTTOM(1.5K)"
-                        if should_split
-                        else "TOP(5K)+BOTTOM(3K)"
-                    ),
-                },
+                "sentence_attributions": sentence_attributions,
+                "passage_table": getattr(self, "_last_passage_table", {}),
+                "passage_backend": (
+                    self.passage_ranker.backend if self.use_passages and self.passage_ranker else "char_slice"
+                ),
+                "context_stats": (
+                    {
+                        # Passage-ranking path (current default): the context sent to
+                        # Agent 4 is the top-K query-relevant passages, NOT a char slice.
+                        "strategy": f"passage-ranking ({self.passage_ranker.backend})",
+                        "total_chars_available": sum(len(text) for text, _ in full_texts),
+                        "docs_available": len(full_texts),
+                        "passages_sent": len(getattr(self, "_last_passage_table", {}) or {}),
+                        "papers_cited": len(
+                            {r.get("citation_num") for r in (getattr(self, "_last_passage_table", {}) or {}).values()}
+                        ),
+                        "context_chars_sent": sum(
+                            len(r.get("text", "")) for r in (getattr(self, "_last_passage_table", {}) or {}).values()
+                        ),
+                    }
+                    if self.use_passages and self.passage_ranker is not None
+                    else {
+                        # Legacy char-slice path (USE_PASSAGES=0).
+                        "max_context_chars": self.max_context_chars,
+                        "total_chars_available": sum(len(text) for text, _ in full_texts),
+                        "docs_available": len(full_texts),
+                        "estimated_docs_used": min(
+                            len(full_texts),
+                            self.max_context_chars // (4000 if should_split else 8000),
+                        ),
+                        "strategy": (
+                            "CONSERVATIVE (split questions)"
+                            if should_split
+                            else "GENEROUS (single question)"
+                        ),
+                        "chars_per_paper_limit": (
+                            "TOP(2.5K)+BOTTOM(1.5K)"
+                            if should_split
+                            else "TOP(5K)+BOTTOM(3K)"
+                        ),
+                    }
+                ),
                 "performance_stats": (
                     monitor.get_stats() if hasattr(monitor, "get_stats") else {}
                 ),
@@ -1491,6 +1674,8 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
         """Clean up resources"""
         if hasattr(self, "executor"):
             self.executor.shutdown(wait=True)
+        if hasattr(self, "_inner_executor"):
+            self._inner_executor.shutdown(wait=True)
         logger.info("Enhanced 4-Agent RAG system closed")
 
 
@@ -1717,10 +1902,11 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                # args.single_question (uncomment this line when running it locally)
-                query
+                args.single_question
             )
-            cited_answer, references, debug_info = ragent.answer_query(args.single_question, db, should_split, sub_questions)
+            cited_answer, references, debug_info = ragent.answer_query(
+                args.single_question, db, should_split=should_split, sub_questions=sub_questions
+            )
             process_time = time.time() - start_time
 
             result = {
@@ -1789,10 +1975,11 @@ def main():
 
         try:
             should_split, sub_questions = ragent.question_splitter.analyze_and_split(
-                # item["question"] (uncomment this line when running it locally)
-                query
+                item["question"]
             )
-            cited_answer, references, debug_info = ragent.answer_query(item["question"], db, should_split, sub_questions)
+            cited_answer, references, debug_info = ragent.answer_query(
+                item["question"], db, should_split=should_split, sub_questions=sub_questions
+            )
             process_time = time.time() - start_time
 
             result = {
