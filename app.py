@@ -585,6 +585,52 @@ if st.sidebar.button("🗑️ New chat"):
     st.rerun()
 
 
+def _esc(s):
+    """Escape text for safe use inside an HTML attribute (tooltip)."""
+    return (str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                  .replace('"', "&quot;").replace("\n", " "))
+
+
+def linkify_citations(answer, references):
+    """Turn each [n] in the answer into a clickable badge with a hover tooltip
+    (source title + passage snippet) that links to the paper PDF. Markdown in the
+    rest of the answer still renders."""
+    cmap = {}
+    for ref in references or []:
+        try:
+            num, title, doc_id, passage = ref
+        except Exception:
+            continue
+        m = re.search(r"\d+", str(num))
+        if not m:
+            continue
+        n = m.group(0)
+        arxiv_id = str(doc_id).split("arXiv:")[-1].replace("'", "").replace('"', '')
+        url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+        snippet = re.sub(r"\s+", " ", (passage or "")).strip()[:240]
+        tip = _esc(f"{str(title).strip()} — {snippet}")
+        cmap[n] = (url, tip)
+
+    badge = ('text-decoration:none;background:#21304a;color:#7fb0ff;'
+             'padding:0 5px;border-radius:5px;font-size:0.85em;font-weight:600;'
+             'white-space:nowrap;')
+
+    def repl(mobj):
+        # Handles single [3] and multi [2, 3] citations.
+        nums = [x.strip() for x in mobj.group(1).split(",")]
+        parts, any_known = [], False
+        for n in nums:
+            if n in cmap:
+                any_known = True
+                url, tip = cmap[n]
+                parts.append(f'<a href="{url}" target="_blank" title="{tip}" style="{badge}">{n}</a>')
+            else:
+                parts.append(n)
+        return "[" + ", ".join(parts) + "]" if any_known else mobj.group(0)
+
+    return re.sub(r"\[(\d+(?:\s*,\s*\d+)*)\]", repl, answer or "")
+
+
 def render_references(references):
     if not references:
         return
@@ -652,7 +698,19 @@ def render_assistant(msg):
     std = di.get("standalone_question")
     if std and std != di.get("asked_question"):
         st.caption(f"🔄 Interpreted as: {std}")
-    st.markdown(msg.get("content", ""))
+    # Answer with clickable/hover citation badges.
+    st.markdown(
+        linkify_citations(msg.get("content", ""), msg.get("references", [])),
+        unsafe_allow_html=True,
+    )
+    # Inline grounding summary (always visible; details in the expander below).
+    sa = di.get("sentence_attributions") or []
+    if sa:
+        grounded = sum(1 for s in sa if s.get("verified"))
+        if grounded == len(sa):
+            st.caption(f"✅ All {len(sa)} sentences grounded to sources — hover any [n] for its source.")
+        else:
+            st.caption(f"⚠️ {grounded}/{len(sa)} sentences grounded — hover any [n] for its source.")
     render_references(msg.get("references", []))
     render_evidence(di)
     render_exec_info(di)
