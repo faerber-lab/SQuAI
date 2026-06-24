@@ -691,6 +691,30 @@ if submit and question:
                 st.markdown(f"{passage}")
                 st.markdown("---")
 
+            # Per-sentence evidence (additive; only renders if the backend provides it).
+            try:
+                sentence_attrs = debug_info.get("sentence_attributions") or []
+                if sentence_attrs:
+                    grounded = sum(1 for s in sentence_attrs if s.get("verified"))
+                    with st.expander(
+                        f"🔎 Sentence-level Evidence ({grounded}/{len(sentence_attrs)} grounded)"
+                    ):
+                        for s in sentence_attrs:
+                            mark = "✅" if s.get("verified") else "⚠️"
+                            cite = s.get("citation_num")
+                            sec = s.get("section", "")
+                            st.markdown(f"{mark} {s.get('sentence', '')}")
+                            if s.get("evidence_preview"):
+                                src = f"[{cite}]" if cite else ""
+                                st.caption(
+                                    f"Source {src} — §{sec} "
+                                    f"(chars {s.get('char_start')}–{s.get('char_end')}): "
+                                    f"{s.get('evidence_preview')}"
+                                )
+                            st.markdown("")
+            except Exception:
+                pass  # never let the evidence panel break the demo
+
             with st.expander("Execution Information"):
                 st.markdown("#### Query Information")
                 st.write(f"- Original Question: `{debug_info.get('original_query')}`")
