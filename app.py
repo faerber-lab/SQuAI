@@ -574,161 +574,149 @@ alpha = st.sidebar.slider(
 #        show_503_page()
 #        st.stop()
 
-# Question Form
-with st.form(key="qa_form"):
-    question = st.text_input("🔎 Enter your question:")
-    submit = st.form_submit_button("Generate Answer")
+# ─────────────────────────── Chat interface ───────────────────────────
+# Conversation history persists across reruns. Each assistant turn keeps its
+# references + debug_info so it re-renders fully on replay.
+if "messages" not in st.session_state:
+    st.session_state.messages = []   # [{"role", "content", "references", "debug_info"}]
 
-if submit and question:
-    split_response = None
+if st.sidebar.button("🗑️ New chat"):
+    st.session_state.messages = []
+    st.rerun()
 
-    with st.spinner("Analyzing Question..."):
-        split_url = "http://localhost:8000/split"
-        split_payload = {
-            "question": question,
-            "model": model_choice,
-            "retrieval_method": retrieval_choice,
-            "n_value": n_value,
-            "top_k": top_k,
-            "alpha": alpha,
-        }
 
+def render_references(references):
+    if not references:
+        return
+    st.markdown("**References**")
+    for ref in references:
         try:
-            split_response = post_with_retry(split_url, split_payload)
-        except RuntimeError as e:
-            st.error(f"❌ {e}")
+            citation_number, title, doc_id, passage = ref
+        except Exception:
+            continue
+        arxiv_id = str(doc_id).split("arXiv:")[-1].replace("'", "").replace('"', '')
+        clean_title = title.replace('?', '').strip()
+        paper_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
+        passage = (passage.replace("Title:", "").replace(title, '').replace(clean_title + '.', "")
+                          .replace("{", "").replace("}", "").replace("\n", " ").replace("  ", " ").replace('?', ''))
+        st.markdown(f"{citation_number} [**<u>{title}</u>**]({paper_url})", unsafe_allow_html=True)
+        st.markdown(f"{passage}")
+        st.markdown("---")
 
-    # Check if we got a 503 error
-    #if split_response is not None and isinstance(split_response, dict) and split_response.get('is_503'):
-    #    show_503_page()
-    #elif split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
-    if split_response is not None and hasattr(split_response, 'status_code') and split_response.status_code == 200:
-        split_data = split_response.json()
-        should_split = split_data.get("should_split")
-        sub_questions = split_data.get("sub_questions", [])
 
-        sub_q_html = ""
-        if sub_questions:
-            sub_q_html += "<ul style='margin-top: 0;'>"
-            for sq in sub_questions:
-                sub_q_html += f"<li>{sq}</li>"
-            sub_q_html += "</ul>"
+def render_evidence(debug_info):
+    try:
+        sentence_attrs = debug_info.get("sentence_attributions") or []
+        if not sentence_attrs:
+            return
+        grounded = sum(1 for s in sentence_attrs if s.get("verified"))
+        with st.expander(f"🔎 Sentence-level Evidence ({grounded}/{len(sentence_attrs)} grounded)"):
+            for s in sentence_attrs:
+                mark = "✅" if s.get("verified") else "⚠️"
+                cite = s.get("citation_num")
+                sec = s.get("section", "")
+                st.markdown(f"{mark} {s.get('sentence', '')}")
+                if s.get("evidence_preview"):
+                    src = f"[{cite}]" if cite else ""
+                    st.caption(
+                        f"Source {src} — §{sec} "
+                        f"(chars {s.get('char_start')}–{s.get('char_end')}): {s.get('evidence_preview')}"
+                    )
+                st.markdown("")
+    except Exception:
+        pass  # never let the evidence panel break the demo
+
+
+def render_exec_info(debug_info):
+    with st.expander("Execution Information"):
+        std = debug_info.get("standalone_question")
+        if std and std != debug_info.get("asked_question"):
+            st.write(f"- Interpreted as: `{std}`")
+        st.markdown("#### Query Information")
+        st.write(f"- Original Question: `{debug_info.get('original_query')}`")
+        st.write(f"- Question Decomposition: `{debug_info.get('was_split')}`")
+        if debug_info.get("sub_questions"):
+            st.write("**Subquestions:**")
+            for sq in debug_info["sub_questions"]:
+                st.markdown(f"  - {sq}")
+        st.markdown("---")
+        st.markdown("#### Evidence Statistic")
+        st.write(f"- Processed Questions: `{debug_info.get('questions_processed')}`")
+        st.write(f"- Retrieved Evidence: `{debug_info.get('full_texts_retrieved')}`")
+        st.write(f"- Filtered Evidence: `{debug_info.get('total_filtered_docs')}`")
+        st.write(f"- Citations: `{debug_info.get('total_citations')}`")
+
+
+def render_assistant(msg):
+    di = msg.get("debug_info", {}) or {}
+    std = di.get("standalone_question")
+    if std and std != di.get("asked_question"):
+        st.caption(f"🔄 Interpreted as: {std}")
+    st.markdown(msg.get("content", ""))
+    render_references(msg.get("references", []))
+    render_evidence(di)
+    render_exec_info(di)
+
+
+# Replay the conversation so far.
+if not st.session_state.messages:
+    st.caption("Ask a question about the scientific literature. Follow-up questions keep the context of the conversation.")
+for m in st.session_state.messages:
+    with st.chat_message(m["role"]):
+        if m["role"] == "assistant":
+            render_assistant(m)
         else:
-            sub_q_html = "<p style='margin-top: 0;'>No sub-questions.</p>"
+            st.markdown(m["content"])
 
-        st.markdown(
-            f"""
-            <div style="
-                border: 2px solid #444;
-                border-radius: 8px;
-                padding: 16px;
-                background-color: #1e1e1e;
-                color: #f5f5f5;
-                display: flex;
-                justify-content: space-between;
-                gap: 40px;
-            ">
-                <div style="flex: 1;">
-                    <strong>Query decomposition:</strong><br>
-                    <code style='color: #00ff99;'>{should_split}</code>
-                </div>
-                <div style="flex: 3;">
-                    <strong>Sub-questions:</strong>
-                    {sub_q_html}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+# New user turn.
+prompt = st.chat_input("Ask a question…")
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        with st.spinner("Retrieving Evidence..."):
-            ask_url = "http://localhost:8000/ask"
+    # Build chat history (prior completed turns) for the backend's rewrite step.
+    history, pending_q = [], None
+    for m in st.session_state.messages[:-1]:
+        if m["role"] == "user":
+            pending_q = m["content"]
+        elif m["role"] == "assistant" and pending_q is not None:
+            history.append({"question": pending_q, "answer": m.get("content", "")})
+            pending_q = None
+
+    with st.chat_message("assistant"):
+        with st.status("Working…", expanded=False) as status:
+            status.update(label="Retrieving evidence and generating answer…")
             ask_payload = {
-                "question": question,
+                "question": prompt,
                 "model": model_choice,
                 "retrieval_method": retrieval_choice,
                 "n_value": n_value,
                 "top_k": top_k,
                 "alpha": alpha,
-                "should_split": should_split,
-                "sub_questions": sub_questions
+                "chat_history": history,
             }
             try:
-                ask_response = requests.post(ask_url, json=ask_payload, timeout=600)
-            except requests.exceptions.ConnectionError:
-                #show_503_page()
-                st.error(f"❌ Error: {str(e)}")
-                st.stop()
+                ask_response = requests.post("http://localhost:8000/ask", json=ask_payload, timeout=600)
             except Exception as e:
+                status.update(label="Error", state="error")
                 st.error(f"❌ Error: {str(e)}")
                 st.stop()
 
-        # Check for 503 on ask endpoint too
-        #if ask_response.status_code == 503:
-        #    show_503_page()
-        #elif ask_response.status_code == 200:
-        if ask_response.status_code == 200:
+            if ask_response.status_code != 200:
+                status.update(label="Error", state="error")
+                st.error(f"❌ Error: {ask_response.status_code} - {ask_response.text}")
+                st.stop()
+
             data = ask_response.json()
-            answer = data.get("answer", "").replace("*", "")
-            debug_info = data.get("debug_info", {})
-            references = data.get("references", [])
+            status.update(label="Done", state="complete")
 
-            st.markdown("### ✅ **Answer**")
-            st.markdown(f"{answer}")
+        assistant_msg = {
+            "role": "assistant",
+            "content": data.get("answer", "").replace("*", ""),
+            "references": data.get("references", []),
+            "debug_info": data.get("debug_info", {}),
+        }
+        render_assistant(assistant_msg)
 
-            st.markdown("### ✅ **References**")
-            for ref in references:
-                citation_number, title, doc_id, passage = ref
-                arxiv_id = doc_id.split("arXiv:")[-1].replace("'", "").replace('"', '')
-                clean_title = title.replace('?', '').strip()
-                paper_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-                passage = passage.replace("Title:", "").replace(title,'').replace(clean_title+'.', "").replace("{", "").replace("}", "").replace("\n", " ").replace("  ", " ").replace('?', '')
-
-                st.markdown(
-                    f"{citation_number} [**<u>{title}</u>**]({paper_url})",
-                    unsafe_allow_html=True
-                )
-                st.markdown(f"{passage}")
-                st.markdown("---")
-
-            # Per-sentence evidence (additive; only renders if the backend provides it).
-            try:
-                sentence_attrs = debug_info.get("sentence_attributions") or []
-                if sentence_attrs:
-                    grounded = sum(1 for s in sentence_attrs if s.get("verified"))
-                    with st.expander(
-                        f"🔎 Sentence-level Evidence ({grounded}/{len(sentence_attrs)} grounded)"
-                    ):
-                        for s in sentence_attrs:
-                            mark = "✅" if s.get("verified") else "⚠️"
-                            cite = s.get("citation_num")
-                            sec = s.get("section", "")
-                            st.markdown(f"{mark} {s.get('sentence', '')}")
-                            if s.get("evidence_preview"):
-                                src = f"[{cite}]" if cite else ""
-                                st.caption(
-                                    f"Source {src} — §{sec} "
-                                    f"(chars {s.get('char_start')}–{s.get('char_end')}): "
-                                    f"{s.get('evidence_preview')}"
-                                )
-                            st.markdown("")
-            except Exception:
-                pass  # never let the evidence panel break the demo
-
-            with st.expander("Execution Information"):
-                st.markdown("#### Query Information")
-                st.write(f"- Original Question: `{debug_info.get('original_query')}`")
-                st.write(f"- Question Decomposition: `{debug_info.get('was_split')}`")
-                if debug_info.get("sub_questions"):
-                    st.write("**Subquestions:**")
-                    for sq in debug_info["sub_questions"]:
-                        st.markdown(f"  - {sq}")
-
-                st.markdown("---")
-                st.markdown("#### Evidence Statistic")
-                st.write(f"- Processed Questions: `{debug_info.get('questions_processed')}`")
-                st.write(f"- Retrieved Evidence: `{debug_info.get('full_texts_retrieved')}`")
-                st.write(f"- Filtered Evidence: `{debug_info.get('total_filtered_docs')}`")
-                st.write(f"- Citations: `{debug_info.get('total_citations')}`")
-        else:
-            st.error(f"❌ Error: {ask_response.status_code} - {ask_response.text}")
+    st.session_state.messages.append(assistant_msg)
