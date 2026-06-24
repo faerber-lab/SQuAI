@@ -383,8 +383,12 @@ def check_backend_available(url, timeout=5):
     except:
         return False
 
+@st.cache_data(ttl=60, show_spinner=False)
 def check_external_api_health():
-    """Checks the ScaDS AI LLM health endpoint and identifies specific unhealthy models"""
+    """Checks the ScaDS AI LLM health endpoint and identifies specific unhealthy models.
+
+    Cached for 60s so the 5s-timeout HTTPS call does NOT run on every Streamlit rerun
+    (which happens on every chat message) — only once per minute."""
     url = "https://llm.scads.ai/health"
     try:
         api_key = (
@@ -549,23 +553,22 @@ st.sidebar.markdown("## Settings")
 model_choice = st.sidebar.selectbox("Language Model", AVAILABLE_MODELS, index=0)
 retrieval_choice = st.sidebar.selectbox("Retrieval Model", ["Hybrid","bm25", "e5"], index=0)
 
-n_value = st.sidebar.slider(
-    "N_VALUE",
-    0.0, 1.0, 0.5, step=0.01,
-    help="Controls document filtering stringency: if 0, filtering is very strict; if 1, it’s very tolerant."
-)
-
-top_k = st.sidebar.number_input(
-    "TOP_K",
-    min_value=1, max_value=20, value=5, step=1,
-    help="Determines how many of the top-ranked documents are considered for answer generation."
-)
-
-alpha = st.sidebar.slider(
-    "ALPHA",
-    0.0, 1.0, 0.65, step=0.01,
-    help="A weighting factor that balances the influence between E5 and BM25 retrieval methods, calculated as Alpha × E5)+ (1 − Alpha) × BM25."
-)
+with st.sidebar.expander("⚙️ Advanced"):
+    n_value = st.slider(
+        "N_VALUE",
+        0.0, 1.0, 0.5, step=0.01,
+        help="Controls document filtering stringency: if 0, filtering is very strict; if 1, it’s very tolerant."
+    )
+    top_k = st.number_input(
+        "TOP_K",
+        min_value=1, max_value=20, value=5, step=1,
+        help="Determines how many of the top-ranked documents are considered for answer generation."
+    )
+    alpha = st.slider(
+        "ALPHA",
+        0.0, 1.0, 0.65, step=0.01,
+        help="A weighting factor that balances the influence between E5 and BM25 retrieval methods, calculated as Alpha × E5 + (1 − Alpha) × BM25."
+    )
 
 # Check backend availability on page load (only once per session)
 #if 'backend_check_done' not in st.session_state:
@@ -693,41 +696,88 @@ def render_exec_info(debug_info):
         st.write(f"- Citations: `{debug_info.get('total_citations')}`")
 
 
-def render_assistant(msg):
+def render_evidence_view(references, sentence_attrs):
+    """Sentence-by-sentence verification view: each sentence on a colour-coded card
+    (green = verified, amber = unverified) with its exact source span and passage."""
+    for s in sentence_attrs:
+        verified = s.get("verified")
+        color = "#2e7d32" if verified else "#b58900"
+        mark = "✅" if verified else "⚠️"
+        sent_html = linkify_citations(s.get("sentence", ""), references)
+        src_html = ""
+        if s.get("evidence_preview"):
+            cite = s.get("citation_num")
+            src = f"[{cite}]" if cite else ""
+            src_html = (
+                f'<div style="font-size:0.8em;color:#9aa6b2;margin-top:5px;">'
+                f'<b>Source {src}</b> · §{_esc(s.get("section",""))} · '
+                f'chars {s.get("char_start")}–{s.get("char_end")}<br>'
+                f'<span style="color:#aebfd0;">{_esc(s.get("evidence_preview",""))}</span></div>'
+            )
+        st.markdown(
+            f'<div style="border-left:3px solid {color};padding:6px 12px;margin:7px 0;'
+            f'background:#161a1f;border-radius:5px;">{mark} {sent_html}{src_html}</div>',
+            unsafe_allow_html=True,
+        )
+
+
+def render_assistant(msg, key=""):
     di = msg.get("debug_info", {}) or {}
     std = di.get("standalone_question")
     if std and std != di.get("asked_question"):
         st.caption(f"🔄 Interpreted as: {std}")
-    # Answer with clickable/hover citation badges.
-    st.markdown(
-        linkify_citations(msg.get("content", ""), msg.get("references", [])),
-        unsafe_allow_html=True,
-    )
-    # Inline grounding summary (always visible; details in the expander below).
+    references = msg.get("references", [])
     sa = di.get("sentence_attributions") or []
+    grounded = sum(1 for s in sa if s.get("verified")) if sa else 0
+
+    # Evidence toggle: off → prose answer + summary; on → per-sentence source view.
+    show_evidence = False
     if sa:
-        grounded = sum(1 for s in sa if s.get("verified"))
-        if grounded == len(sa):
-            st.caption(f"✅ All {len(sa)} sentences grounded to sources — hover any [n] for its source.")
-        else:
-            st.caption(f"⚠️ {grounded}/{len(sa)} sentences grounded — hover any [n] for its source.")
-    render_references(msg.get("references", []))
-    render_evidence(di)
+        with st.columns([3, 1])[1]:
+            show_evidence = st.toggle(
+                "🔎 Show evidence", key=f"ev_{key}",
+                help="Show each sentence with its exact source passage and verification.",
+            )
+
+    if show_evidence and sa:
+        render_evidence_view(references, sa)
+    else:
+        st.markdown(linkify_citations(msg.get("content", ""), references), unsafe_allow_html=True)
+        if sa:
+            label = (f"✅ All {len(sa)} sentences grounded to sources"
+                     if grounded == len(sa)
+                     else f"⚠️ {grounded}/{len(sa)} sentences grounded")
+            st.caption(f"{label} — toggle “Show evidence” to verify each.")
+
+    render_references(references)
     render_exec_info(di)
 
 
+EXAMPLE_QUESTIONS = [
+    "What is retrieval-augmented generation?",
+    "How does a transformer's attention mechanism work?",
+    "What are the trade-offs between dense and sparse retrieval?",
+]
+
 # Replay the conversation so far.
-if not st.session_state.messages:
+if not st.session_state.messages and not st.session_state.get("_seed"):
     st.caption("Ask a question about the scientific literature. Follow-up questions keep the context of the conversation.")
-for m in st.session_state.messages:
+    st.markdown("**Try an example:**")
+    for col, eq in zip(st.columns(len(EXAMPLE_QUESTIONS)), EXAMPLE_QUESTIONS):
+        if col.button(eq, use_container_width=True):
+            st.session_state._seed = eq
+            st.rerun()
+for i, m in enumerate(st.session_state.messages):
     with st.chat_message(m["role"]):
         if m["role"] == "assistant":
-            render_assistant(m)
+            render_assistant(m, key=str(i))
         else:
             st.markdown(m["content"])
 
-# New user turn.
+# New user turn — from the chat box or a clicked example chip.
 prompt = st.chat_input("Ask a question…")
+if not prompt and st.session_state.get("_seed"):
+    prompt = st.session_state.pop("_seed")
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -775,6 +825,7 @@ if prompt:
             "references": data.get("references", []),
             "debug_info": data.get("debug_info", {}),
         }
-        render_assistant(assistant_msg)
+        # key matches the index this message will have on the next rerun's history loop
+        render_assistant(assistant_msg, key=str(len(st.session_state.messages)))
 
     st.session_state.messages.append(assistant_msg)
