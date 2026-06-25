@@ -14,10 +14,10 @@ except ModuleNotFoundError as e:
     sys.exit(1)
 
 AVAILABLE_MODELS = [
-    "google/gemma-4-31B-it",
-    "moonshotai/Kimi-K2.6",
+    "google/gemma-4-31B-it",               # default: most accurate per-claim citations
     "openai/gpt-oss-120b",
     "meta-llama/Llama-3.3-70B-Instruct",
+    "moonshotai/Kimi-K2.6",
 ]
 
 def get_script_path():
