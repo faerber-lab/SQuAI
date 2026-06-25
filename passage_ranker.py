@@ -523,7 +523,9 @@ def attribute_sentences(answer_text: str, passage_table: Dict[str, dict],
 
     results = []
     for si, sent in enumerate(split_sentences(answer_text)):
-        cites = sorted({int(n) for n in re.findall(r"\[(\d+)\]", sent)})
+        # Handles single [n] and multi-citations like [1, 2, 3].
+        cites = sorted({int(n) for grp in re.findall(r"\[([\d,\s]+)\]", sent)
+                        for n in re.findall(r"\d+", grp)})
         clean = re.sub(r"\[\d+\]", "", sent).strip()
         if len(clean) < 8:
             continue

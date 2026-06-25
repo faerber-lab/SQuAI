@@ -49,6 +49,16 @@ logger = logging.getLogger("Enhanced_4Agent_RAG")
 from hybrid_retriever import Retriever
 
 
+def _cited_numbers(text):
+    """All citation numbers referenced in an answer, handling BOTH single [n] and
+    multi-citations like [1, 2, 3]. The old `\\[(\\d+)\\]` regex missed any number that
+    only ever appeared inside a multi-citation, which dropped its reference entirely."""
+    nums = set()
+    for grp in re.findall(r"\[([\d,\s]+)\]", text or ""):
+        nums.update(int(n) for n in re.findall(r"\d+", grp))
+    return nums
+
+
 class QuestionSplitter:
     """
     Agent 1: Intelligent Question Splitting Agent
@@ -648,8 +658,8 @@ class EnhancedCitationHandler:
             sentences = re.split(r"[.!?]+", clean_doc_text)
             sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
 
-            # Look for content that appears in the answer near this citation
-            citation_pattern = f"\\[{citation_num}\\]"
+            # Look for content near this citation — matches [n] AND multi like [1, 4].
+            citation_pattern = rf"\[[^\]]*\b{citation_num}\b[^\]]*\]"
             citation_matches = list(re.finditer(citation_pattern, answer_text))
 
             if not citation_matches:
@@ -727,8 +737,7 @@ class EnhancedCitationHandler:
 
         # If answer text provided, filter to only used citations
         if answer_text:
-            citation_matches = re.findall(r"\[(\d+)\]", answer_text)
-            used_citations = set(int(num) for num in citation_matches)
+            used_citations = _cited_numbers(answer_text)
 
             if used_citations:
                 citations_to_show = used_citations.intersection(
@@ -1188,34 +1197,32 @@ Is this document relevant and supportive for answering the question?"""
 
         docs_text = "\n\n" + "=" * 50 + "\n\n".join(docs_with_citations)
 
-        # Count available citation numbers
+        # The document numbers are IDENTIFIERS to choose from — not a template to copy.
         available_citations = [str(i) for i in range(1, len(docs_with_citations) + 1)]
         citation_examples = ", ".join(available_citations)
+        n_docs = len(docs_with_citations)
 
         return f"""You are an accurate and reliable AI assistant. Answer questions based ONLY on the provided documents with proper academic citations.
 
-STRICT CITATION REQUIREMENTS - YOU MUST FOLLOW THESE:
-1. You MUST add [{citation_examples}] after EVERY claim you make
-2. Every sentence that contains factual information MUST end with a citation
-3. If you mention ANY concept, method, or fact, cite the document immediately
-4. Use ONLY the document numbers shown: [{citation_examples}]
-5. Do NOT write ANY sentence without a citation number
-6. Use MULTIPLE different documents - don't just cite [1] repeatedly
-7. Do NOT add a references section - it will be added automatically
-8. EXAMPLE: "Machine learning involves pattern recognition [1]. Neural networks are a popular approach [2]. Deep learning has shown success in many domains [3]."
+The documents below are numbered [1] to [{n_docs}]. Each number identifies ONE source document — a citation like [2] means "this claim comes from document 2". The list {citation_examples} is the set of documents you may cite from; it is NOT a citation to copy.
 
-WRONG (no citations): "Machine learning is a powerful technique."
-CORRECT (with citations): "Machine learning is a powerful technique for pattern recognition [1]."
+CITATION REQUIREMENTS - FOLLOW THESE:
+1. End every factual sentence with the number(s) of the document(s) that actually support THAT specific claim, in square brackets — e.g. [2], or [1, 3] when one claim is genuinely supported by two documents.
+2. Cite only the document(s) relevant to each claim. Do NOT put every number (e.g. [{citation_examples}]) after a sentence unless all of them truly support it.
+3. Every sentence containing factual information must end with a citation.
+4. Use ONLY the document numbers shown ({citation_examples}); never invent a number.
+5. Different claims usually draw on different documents — don't cite the same one for everything.
+6. Do NOT add a references section - it will be added automatically.
+7. Answer directly and stop once the question is answered. Do NOT add a concluding "In summary" or "In conclusion" paragraph.
 
-WRONG (only one citation): "ML works by finding patterns [1]. It uses algorithms [1]. It requires data [1]."
-CORRECT (multiple citations): "ML works by finding patterns [1]. It uses algorithms [2]. It requires data [3]."
+EXAMPLE: "Machine learning involves pattern recognition [1]. Neural networks are a popular approach [2]. Both benefit from large training datasets [1, 2]."
 
 Documents:
 {docs_text}
 
 Question: {original_query}
 
-Remember: Use information from MULTIPLE documents and cite each one appropriately with [{citation_examples}]. Answer:"""
+Answer:"""
 
     def _log_retrieved_papers(
         self, query: str, retrieved_abstracts: List[Tuple], phase: str = "RETRIEVAL"
@@ -1627,9 +1634,8 @@ Remember: Use information from MULTIPLE documents and cite each one appropriatel
         self, answer_text: str, citation_handler: EnhancedCitationHandler
     ):
         """Extract the specific passages used in the answer"""
-        # Find all citations in the answer
-        citation_matches = re.findall(r"\[(\d+)\]", answer_text)
-        used_citations = set(int(num) for num in citation_matches)
+        # Find all citations in the answer (handles single [n] and multi [1, 2, 3]).
+        used_citations = _cited_numbers(answer_text)
 
         passages_used = []
         for citation_num in used_citations:
